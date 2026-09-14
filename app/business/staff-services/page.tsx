@@ -7,11 +7,7 @@ import EmptyState from '@/components/EmptyState';
 import Skeleton from '@/components/Skeleton';
 import Modal from '@/components/Modal';
 import ConfirmDialog from '@/components/ConfirmDialog';
-<<<<<<< HEAD
-import DataTable from '@/components/DataTable';
 import CustomSelect from '@/components/CustomSelect';
-=======
->>>>>>> 4bcd58b (Now Fix some error related to leaflet resize and now when user selecet service For example consultantaton they show all the staff wo provide this service and then choose which one user wanted and also Any available when choose some specific then if some times are already booked of that staff it shown booked in the slot and then selecet any other slot or choose other staff and any available staff.)
 import { formatMoney } from '@/lib/money';
 import styles from './staff-services.module.css';
 
@@ -414,50 +410,6 @@ export default function StaffServicesPage() {
             <label className="form-label" htmlFor="serviceSelect">
               Service
             </label>
-            <select
-              id="serviceSelect"
-              className="select-field"
-              value={formData.serviceId}
-              onChange={(e) => {
-                const serviceId = e.target.value;
-                setFormData((prev) => ({
-                  ...prev,
-                  serviceId,
-                  staffId: editingAssignment ? prev.staffId : firstFreeStaffForService(serviceId, prev.staffId),
-                }));
-              }}
-              disabled={!!editingAssignment}
-            >
-              {services.map((svc) => (
-                <option key={svc.id} value={svc.id}>
-                  {svc.name} ({money(svc.price, svc.currency)})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="staffSelect">
-              Staff member
-            </label>
-            <CustomSelect
-              id="staffSelect"
-              options={staffList.map((s) => ({
-                value: String(s.id),
-                label: staffLabel(s),
-                sublabel: s.specialty || 'Generalist',
-              }))}
-              value={String(formData.staffId || '')}
-              onChange={(value) => handleInputChange('staffId', value)}
-              placeholder="Select staff member"
-              disabled={!!editingAssignment}
-<<<<<<< HEAD
-              searchable={staffList.length > 6}
-            />
-          </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="serviceSelect">
-              Service
-            </label>
             <CustomSelect
               id="serviceSelect"
               options={services.map((svc) => ({
@@ -466,25 +418,44 @@ export default function StaffServicesPage() {
                 sublabel: money(svc.price, svc.currency),
               }))}
               value={String(formData.serviceId || '')}
-              onChange={(value) => handleInputChange('serviceId', value)}
+              onChange={(value) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  serviceId: value,
+                  staffId: editingAssignment ? prev.staffId : firstFreeStaffForService(value, prev.staffId),
+                }));
+              }}
               placeholder="Select service"
               disabled={!!editingAssignment}
               searchable={services.length > 6}
             />
-=======
-            >
-              {availableStaffForForm.length === 0 ? (
-                <option value="">All specialists already offer this service</option>
-              ) : (
-                availableStaffForForm.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {staffLabel(s)} ({s.specialty || s.designation || 'Generalist'}
-                    {s.branch?.name ? ` · ${s.branch.name}` : ''})
-                  </option>
-                ))
-              )}
-            </select>
->>>>>>> 4bcd58b (Now Fix some error related to leaflet resize and now when user selecet service For example consultantaton they show all the staff wo provide this service and then choose which one user wanted and also Any available when choose some specific then if some times are already booked of that staff it shown booked in the slot and then selecet any other slot or choose other staff and any available staff.)
+          </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="staffSelect">
+              Staff member
+            </label>
+            <CustomSelect
+              id="staffSelect"
+              options={
+                availableStaffForForm.length === 0
+                  ? [{ value: '', label: 'All specialists already offer this service' }]
+                  : availableStaffForForm.map((s) => ({
+                      value: String(s.id),
+                      label: staffLabel(s),
+                      sublabel: [
+                        s.specialty || s.designation || 'Generalist',
+                        s.branch?.name,
+                      ]
+                        .filter(Boolean)
+                        .join(' · '),
+                    }))
+              }
+              value={String(formData.staffId || '')}
+              onChange={(value) => handleInputChange('staffId', value)}
+              placeholder="Select staff member"
+              disabled={!!editingAssignment || availableStaffForForm.length === 0}
+              searchable={availableStaffForForm.length > 6}
+            />
           </div>
           <div className={styles.checkRow}>
             <input
