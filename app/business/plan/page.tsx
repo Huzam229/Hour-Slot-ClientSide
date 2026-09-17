@@ -25,6 +25,12 @@ type PlansPayload = {
   billingNote: string;
 };
 
+type UsagePayload = {
+  period?: string;
+  organizationId?: number;
+  counters?: Record<string, number>;
+};
+
 const FEATURE_ROWS: { key: string; label: string; kind: 'bool' | 'int' }[] = [
   { key: 'max_branches', label: 'Branch locations limit', kind: 'int' },
   { key: 'max_staff', label: 'Staff member seats limit', kind: 'int' },
@@ -35,7 +41,9 @@ const FEATURE_ROWS: { key: string; label: string; kind: 'bool' | 'int' }[] = [
   { key: 'sms_monthly', label: 'Monthly notification SMS', kind: 'int' },
   { key: 'yield_dashboard', label: 'Executive yield dashboard', kind: 'bool' },
   { key: 'white_label', label: 'White-label custom booking page', kind: 'bool' },
-  { key: 'owner_reply', label: 'Review reply privilege', kind: 'bool' },
+  { key: 'home_service', label: 'Home / on-site services', kind: 'bool' },
+  { key: 'max_service_areas', label: 'Service area limit', kind: 'int' },
+  { key: 'max_quotes_monthly', label: 'Quotes per month', kind: 'int' },
 ];
 
 function formatValue(kind: 'bool' | 'int', value: unknown) {
@@ -54,14 +62,19 @@ function formatValue(kind: 'bool' | 'int', value: unknown) {
 export default function PlanPage() {
   const { refresh } = useOwnerPlan();
   const [payload, setPayload] = useState<PlansPayload | null>(null);
+  const [usage, setUsage] = useState<UsagePayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<PlanRow | null>(null);
 
   useEffect(() => {
-    apiFetch<PlansPayload>('/api/business/plans')
-      .then((data) => {
+    Promise.all([
+      apiFetch<PlansPayload>('/api/business/plans'),
+      apiFetch<UsagePayload>('/api/business/usage').catch(() => null),
+    ])
+      .then(([data, usageData]) => {
         setPayload(data);
+        setUsage(usageData);
         void refresh();
       })
       .catch((err: { message?: string }) => setError(err?.message || 'Could not load plans.'))
@@ -155,6 +168,28 @@ export default function PlanPage() {
                 <div className={styles.progressBar} style={{ width: '0%', background: 'linear-gradient(90deg, #0f7676, #6366f1)' }} />
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {usage?.counters && Object.keys(usage.counters).length > 0 && (
+        <div className={`surface ${styles.usageDashboard}`}>
+          <div className={styles.usageHeader}>
+            <h4>Monthly usage counters</h4>
+            <span className={styles.activePlanBadge}>
+              <i className="fa-solid fa-calendar" /> Period: {usage.period || 'current month'}
+            </span>
+          </div>
+          <div className={styles.metersGrid}>
+            {Object.entries(usage.counters).map(([code, count]) => (
+              <div className={styles.meterCard} key={code}>
+                <div className={styles.meterMeta}>
+                  <span>{code.replaceAll('_', ' ')}</span>
+                  <strong>{count}</strong>
+                </div>
+                <div className={styles.unlimitedBar} />
+              </div>
+            ))}
           </div>
         </div>
       )}

@@ -427,6 +427,7 @@
 .sideAccentTeal .sideLinkIcon { background: rgba(26, 138, 138, 0.2); color: #7dd3c0; }
 .sideAccentIndigo .sideLinkIcon { background: rgba(99, 102, 241, 0.2); color: #a5b4fc; }
 .sideAccentRose .sideLinkIcon { background: rgba(244, 63, 94, 0.2); color: #fda4af; }
+.sideAccentCoral .sideLinkIcon { background: rgba(249, 115, 22, 0.2); color: #fdba74; }
 .sideAccentViolet .sideLinkIcon { background: rgba(139, 92, 246, 0.2); color: #c4b5fd; }
 .sideAccentSky .sideLinkIcon { background: rgba(14, 165, 233, 0.2); color: #7dd3fc; }
 
@@ -551,6 +552,25 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.businessSwitch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 11px;
+  border: 1px solid rgba(26, 138, 138, 0.2);
+  border-radius: var(--radius-md);
+  color: var(--accent-primary);
+  background: var(--tint-teal);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.businessSwitch:hover {
+  color: #fff;
+  background: var(--accent-primary);
 }
 
 .hamburger {
@@ -719,6 +739,10 @@
   .topbar {
     min-height: 56px;
     padding: 8px 14px;
+  }
+
+  .businessSwitch span {
+    display: none;
   }
 
   .dashBody {

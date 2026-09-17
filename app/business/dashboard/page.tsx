@@ -81,6 +81,9 @@ export default function BusinessDashboardPage() {
     hours: 0,
   });
   const [docsReady, setDocsReady] = useState(false);
+  const [todayOps, setTodayOps] = useState<{ bookingsCount: number; jobsCount: number } | null>(null);
+  const [opsStatus, setOpsStatus] = useState('AVAILABLE');
+  const [savingOps, setSavingOps] = useState(false);
 
   // Quote of the day and Weather states
   const [quote, setQuote] = useState<{ quote: string; author: string } | null>(null);
@@ -245,6 +248,16 @@ export default function BusinessDashboardPage() {
         setDocsReady(submitted >= required);
       })
       .catch(() => setDocsReady(false));
+
+    apiFetch<{ bookings?: unknown[]; jobs?: unknown[]; opsStatus?: string }>('/api/provider/ops/today')
+      .then((data) => {
+        setTodayOps({
+          bookingsCount: Array.isArray(data.bookings) ? data.bookings.length : 0,
+          jobsCount: Array.isArray(data.jobs) ? data.jobs.length : 0,
+        });
+        if (data.opsStatus) setOpsStatus(data.opsStatus);
+      })
+      .catch(() => setTodayOps(null));
   }, []);
 
   const handleInputChange = (field: string, value: any) => {
@@ -492,10 +505,40 @@ export default function BusinessDashboardPage() {
           {/* Metric Grid */}
           <MetricGrid>
             <StatCard label="Active Bookings" value={activeBookingsCount} hint="Pending or confirmed slots" icon="fa-calendar-days" />
-            <StatCard label="Today's Bookings" value={todayBookingsCount} hint="Appointments today" icon="fa-clock" />
+            <StatCard label="Today's Bookings" value={todayOps?.bookingsCount ?? todayBookingsCount} hint="Appointments today" icon="fa-clock" />
+            <StatCard label="Today's Jobs" value={todayOps?.jobsCount ?? 0} hint="Service jobs scheduled today" icon="fa-briefcase" />
             <StatCard label="Est. Revenue" value={format(estimatedRevenue)} hint="Total active slot rates" icon="fa-wallet" />
             <StatCard label="Rating Score" value={business?.rating ? `${business.rating.toFixed(1)} / 5` : '0.0'} hint="Customer reviews feedback" icon="fa-star" />
           </MetricGrid>
+
+          <div className="surface" style={{ padding: 16, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            <strong>Availability status</strong>
+            <CustomSelect
+              searchable={false}
+              value={opsStatus}
+              onChange={(value) => {
+                setOpsStatus(value);
+                setSavingOps(true);
+                apiFetch('/api/provider/ops/status', {
+                  method: 'PATCH',
+                  body: JSON.stringify({ opsStatus: value }),
+                })
+                  .then(() => setMessage(`Status set to ${value.replaceAll('_', ' ').toLowerCase()}.`))
+                  .catch((err: { message?: string }) => setError(err?.message || 'Could not update status.'))
+                  .finally(() => setSavingOps(false));
+              }}
+              options={[
+                { value: 'AVAILABLE', label: 'Available' },
+                { value: 'BUSY', label: 'Busy' },
+                { value: 'UNAVAILABLE', label: 'Unavailable' },
+                { value: 'VACATION', label: 'Vacation' },
+              ]}
+              placeholder="Status"
+            />
+            {savingOps && <span className={styles.previewHint}>Saving…</span>}
+            <Link href="/business/calendar" className="btn btn-outline btn-sm">Open calendar</Link>
+            <Link href="/business/analytics" className="btn btn-outline btn-sm">Analytics</Link>
+          </div>
 
           <div className={styles.dashboardLayout}>
             {/* Main Panel */}

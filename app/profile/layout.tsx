@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, Suspense, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth-context';
 import HeaderNav from '@/components/HeaderNav';
 import NotificationPanel from '@/components/NotificationPanel';
 import { loginHref, registerHref } from '@/lib/auth-redirect';
+import { apiFetch } from '@/lib/api';
 import styles from './profile-layout.module.css';
 
 const GUEST_NAV = [
@@ -19,8 +20,12 @@ const GUEST_NAV = [
 const CUSTOMER_NAV = [
   { href: '/profile/explore', icon: 'fa-compass', label: 'Explore', short: 'Explore', accent: 'teal' },
   { href: '/profile/bookings', icon: 'fa-calendar-check', label: 'My Bookings', short: 'Bookings', accent: 'indigo' },
+  { href: '/profile/requests', icon: 'fa-file-lines', label: 'My Requests', short: 'Requests', accent: 'coral' },
+  { href: '/profile/jobs', icon: 'fa-briefcase', label: 'Jobs', short: 'Jobs', accent: 'indigo' },
+  { href: '/community', icon: 'fa-people-group', label: 'Community', short: 'Community', accent: 'violet' },
   { href: '/profile/favorites', icon: 'fa-heart', label: 'Favorites', short: 'Saved', accent: 'rose' },
   { href: '/profile/packages', icon: 'fa-gift', label: 'Packages', short: 'Packages', accent: 'violet' },
+  { href: '/profile/addresses', icon: 'fa-location-dot', label: 'Addresses', short: 'Addresses', accent: 'indigo' },
   { href: '/profile', icon: 'fa-gear', label: 'Settings', short: 'Account', exact: true, accent: 'sky' },
 ] as const;
 
@@ -31,6 +36,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   const [menuOpen, setMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
+  const [providerWorkspace, setProviderWorkspace] = useState(user?.role === 'BUSINESS_OWNER');
 
   const isActive = (href: string, exact?: boolean) => {
     if (href.startsWith('/#')) return false;
@@ -52,6 +58,16 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
     logout();
     router.push('/profile/explore');
   };
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setProviderWorkspace(false);
+      return;
+    }
+    apiFetch<{ providerWorkspace?: boolean }>('/api/users/me')
+      .then((me) => setProviderWorkspace(Boolean(me.providerWorkspace) || user?.role === 'BUSINESS_OWNER'))
+      .catch(() => setProviderWorkspace(user?.role === 'BUSINESS_OWNER'));
+  }, [isAuthenticated, user?.role]);
 
   if (loading) {
     return (
@@ -129,6 +145,12 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
               <i className="fa-solid fa-bars" />
             </button>
             <div className={styles.topbarRight}>
+              {(user.role === 'BUSINESS_OWNER' || providerWorkspace) && (
+                <Link href="/business/dashboard" className={styles.businessSwitch}>
+                  <i className="fa-solid fa-briefcase" />
+                  <span>Provider mode</span>
+                </Link>
+              )}
               <NotificationPanel />
               <div className={styles.userWrap}>
                 <button type="button" className={styles.userBtn} onClick={() => setUserOpen((v) => !v)}>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { apiFetch } from '@/lib/api';
 import FormField from '@/components/FormField';
@@ -9,6 +10,7 @@ import Skeleton from '@/components/Skeleton';
 import GeoFields, { type GeoSelection } from '@/components/GeoFields';
 import CustomSelect from '@/components/CustomSelect';
 import styles from './register-business.module.css';
+import phaseStyles from '@/app/phase1.module.css';
 
 const LocationPicker = dynamic(
   () => import('@/components/LocationMap').then((m) => m.LocationPicker),
@@ -43,10 +45,10 @@ export default function RegisterBusinessPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    apiFetch<any[]>('/api/public/categories')
+    apiFetch<Category[]>('/api/public/categories')
       .then((data) => {
         const flat: Category[] = [];
-        const walk = (node: any) => {
+        const walk = (node: Category & { subcategories?: Category[] }) => {
           flat.push({ id: node.id, name: node.name });
           (node.subcategories || []).forEach(walk);
         };
@@ -112,8 +114,8 @@ export default function RegisterBusinessPage() {
       });
       setSuccessMessage(res.message || 'Business application submitted.');
       setTimeout(() => router.push('/business/verification'), 1200);
-    } catch (err: any) {
-      setErrorMessage(err?.message || 'Failed to submit application.');
+    } catch (err: unknown) {
+      setErrorMessage((err as { message?: string })?.message || 'Failed to submit application.');
     } finally {
       setLoading(false);
     }
@@ -122,6 +124,16 @@ export default function RegisterBusinessPage() {
   return (
     <div className={styles.businessRegContainer}>
       <div className={`surface ${styles.registrationCard}`}>
+        <div className={phaseStyles.choiceGrid} style={{ marginBottom: 28 }}>
+          <div className={phaseStyles.choiceActive}>
+            <strong><i className="fa-solid fa-store" /> Business / salon</strong>
+            <span>Register a venue with branches, staff, and shared operations.</span>
+          </div>
+          <Link href="/business/onboarding/individual" className={phaseStyles.choice}>
+            <strong><i className="fa-solid fa-user" /> I&apos;m an individual professional</strong>
+            <span>Create a personal provider listing for your own services.</span>
+          </Link>
+        </div>
         <div className={styles.registrationHeader}>
           <div className={styles.regIcon}>
             <i className="fa-solid fa-briefcase" />

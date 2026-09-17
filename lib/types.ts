@@ -50,6 +50,9 @@ export interface Business {
   countryCode?: string;
   primaryCategory?: Category | null;
   secondaryCategories?: Category[];
+  listingMode?: string;
+  serviceMode?: string;
+  opsStatus?: string;
 }
 
 export interface Branch {

@@ -23,8 +23,10 @@ interface ExploreBranch extends Branch {
   distanceKm?: number;
 }
 
-function branchProfileHref(businessId: number, branchId: number) {
-  return `/profile/business/${businessId}?branchId=${branchId}`;
+function branchProfileHref(branch: ExploreBranch) {
+  const slug = branch.business?.slug;
+  if (slug) return `/b/${encodeURIComponent(slug)}`;
+  return `/profile/business/${branch.business.id}?branchId=${branch.id}`;
 }
 
 function withExploreMeta(list: ExploreBranch[]): ExploreBranch[] {
@@ -36,6 +38,21 @@ function withExploreMeta(list: ExploreBranch[]): ExploreBranch[] {
 }
 
 const DISTANCES = [5, 10, 25, 50];
+
+function discoveryFilterQs(filters: {
+  serviceMode: string;
+  listingMode: string;
+  verifiedOnly: boolean;
+  geoAreaId: string;
+}) {
+  const params = new URLSearchParams();
+  if (filters.serviceMode) params.set('serviceMode', filters.serviceMode);
+  if (filters.listingMode) params.set('listingMode', filters.listingMode);
+  if (filters.verifiedOnly) params.set('verified', 'true');
+  if (filters.geoAreaId) params.set('geoAreaId', filters.geoAreaId);
+  const encoded = params.toString();
+  return encoded ? `&${encoded}` : '';
+}
 
 const CATEGORY_ACCENTS = ['teal', 'coral', 'violet', 'sky', 'rose', 'indigo', 'amber', 'emerald'] as const;
 
@@ -56,6 +73,11 @@ export default function ExplorePage() {
   const [radiusKm, setRadiusKm] = useState(50);
   const [sortBy, setSortBy] = useState<'recommended' | 'rating'>('recommended');
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [serviceMode, setServiceMode] = useState('');
+  const [listingMode, setListingMode] = useState('');
+  const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [geoAreaId, setGeoAreaId] = useState('');
+  const [geoAreas, setGeoAreas] = useState<{ id: number; name: string; city?: string }[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [hoveredId, setHoveredId] = useState<number | null>(null);
   const bootstrapped = useRef(false);
@@ -69,7 +91,7 @@ export default function ExplorePage() {
     setLoading(true);
     setError(null);
     try {
-      const nearbyUrl = `/api/discover/nearby?lat=${lat}&lon=${lon}&radius=${radius * 1000}${queryVal ? `&q=${encodeURIComponent(queryVal)}` : ''}`;
+      const nearbyUrl = `/api/discover/nearby?lat=${lat}&lon=${lon}&radius=${radius * 1000}${queryVal ? `&q=${encodeURIComponent(queryVal)}` : ''}${discoveryFilterQs({ serviceMode, listingMode, verifiedOnly, geoAreaId })}`;
       const favPromise = isAuthenticated
         ? apiFetch<{ business: { id: number } }[]>('/api/favorites').catch(() => [])
         : Promise.resolve([] as { business: { id: number } }[]);
@@ -93,13 +115,13 @@ export default function ExplorePage() {
     } finally {
       setLoading(false);
     }
-  }, [radiusKm, isAuthenticated]);
+  }, [radiusKm, isAuthenticated, serviceMode, listingMode, verifiedOnly, geoAreaId]);
 
   const loadSearch = useCallback(async (queryVal = '', isSearching = false) => {
     setLoading(true);
     setError(null);
     try {
-      const searchUrl = `/api/discover/search?q=${encodeURIComponent(queryVal)}`;
+      const searchUrl = `/api/discover/search?q=${encodeURIComponent(queryVal)}${discoveryFilterQs({ serviceMode, listingMode, verifiedOnly, geoAreaId })}`;
       const favPromise = isAuthenticated
         ? apiFetch<{ business: { id: number } }[]>('/api/favorites').catch(() => [])
         : Promise.resolve([] as { business: { id: number } }[]);
@@ -122,7 +144,7 @@ export default function ExplorePage() {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, serviceMode, listingMode, verifiedOnly, geoAreaId]);
 
   const loadCategoriesOnly = useCallback(async () => {
     setLoading(true);
@@ -161,6 +183,18 @@ export default function ExplorePage() {
       loadSearch(query, true);
     }
   }, [coords, loadNearby, loadSearch, radiusKm]);
+
+  useEffect(() => {
+    apiFetch<{ id: number; name: string; city?: string }[]>('/api/public/geo/areas', { skipAuth: true })
+      .then(setGeoAreas)
+      .catch(() => setGeoAreas([]));
+  }, []);
+
+  useEffect(() => {
+    if (!bootstrapped.current) return;
+    triggerSearchOrNearby(searchQuery);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serviceMode, listingMode, verifiedOnly, geoAreaId]);
 
   useEffect(() => {
     if (authLoading || bootstrapped.current) return;
@@ -409,7 +443,7 @@ export default function ExplorePage() {
     const cover = coverFor(b);
     const cat = b.business.primaryCategory?.name || 'Service';
     return (
-      <Link href={branchProfileHref(b.business.id, b.id)} key={b.id} className={styles.popularCard}>
+      <Link href={branchProfileHref(b)} key={b.id} className={styles.popularCard}>
         <div className={styles.popularCardImageWrapper}>
           {cover ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -463,7 +497,7 @@ export default function ExplorePage() {
     const isFav = favorites.includes(b.business.id);
     const cover = coverFor(b);
     const cat = b.business.primaryCategory?.name || 'Service';
-    const href = branchProfileHref(b.business.id, b.id);
+    const href = branchProfileHref(b);
     return (
       <article
         key={b.id}
@@ -628,6 +662,63 @@ export default function ExplorePage() {
                 placeholder="Sort by"
               />
             </label>
+            <label className={styles.filterPill}>
+              Service
+              <CustomSelect
+                variant="compact"
+                searchable={false}
+                value={serviceMode}
+                onChange={(value) => setServiceMode(value)}
+                options={[
+                  { value: '', label: 'Any place' },
+                  { value: 'AT_PROVIDER', label: 'At provider' },
+                  { value: 'CUSTOMER_LOCATION', label: 'At your location' },
+                  { value: 'HYBRID', label: 'Hybrid' },
+                ]}
+                placeholder="Service mode"
+              />
+            </label>
+            <label className={styles.filterPill}>
+              Listing
+              <CustomSelect
+                variant="compact"
+                searchable={false}
+                value={listingMode}
+                onChange={(value) => setListingMode(value)}
+                options={[
+                  { value: '', label: 'All listings' },
+                  { value: 'BUSINESS', label: 'Business' },
+                  { value: 'INDIVIDUAL', label: 'Individual' },
+                ]}
+                placeholder="Listing"
+              />
+            </label>
+            {geoAreas.length > 0 && (
+              <label className={styles.filterPill}>
+                Area
+                <CustomSelect
+                  variant="compact"
+                  searchable
+                  value={geoAreaId}
+                  onChange={(value) => setGeoAreaId(value)}
+                  options={[
+                    { value: '', label: 'Any area' },
+                    ...geoAreas.map((area) => ({
+                      value: String(area.id),
+                      label: area.city ? `${area.name} (${area.city})` : area.name,
+                    })),
+                  ]}
+                  placeholder="Area"
+                />
+              </label>
+            )}
+            <button
+              type="button"
+              className={`${styles.filterMain} ${verifiedOnly ? styles.filterMainOn : ''}`}
+              onClick={() => setVerifiedOnly((v) => !v)}
+            >
+              <i className="fa-solid fa-circle-check" /> Verified
+            </button>
           </div>
 
           {filtersOpen && categories.length > 0 && (
@@ -736,7 +827,7 @@ export default function ExplorePage() {
                 )}
               </div>
               <div className={styles.mapCardBody}>
-                <Link href={branchProfileHref(selected.business.id, selected.id)}>{selected.business.name}</Link>
+                <Link href={branchProfileHref(selected)}>{selected.business.name}</Link>
                 <p>
                   <strong>{selected.name}</strong>
                   {selected.address ? ` · ${selected.address}` : ''}
@@ -748,7 +839,7 @@ export default function ExplorePage() {
                   {typeof selected.distanceKm === 'number' ? `${selected.distanceKm.toFixed(1)} km` : 'Nearby'}
                 </span>
               </div>
-              <Link href={branchProfileHref(selected.business.id, selected.id)} className={styles.mapCardBook}>
+              <Link href={branchProfileHref(selected)} className={styles.mapCardBook}>
                 View
               </Link>
               <button type="button" className={styles.mapCardClose} onClick={() => setSelectedId(null)} aria-label="Close">

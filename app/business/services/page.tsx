@@ -25,6 +25,8 @@ interface Service {
   active: boolean;
   capacity: number;
   groupService: boolean;
+  pricingType?: string;
+  requiresQuote?: boolean;
 }
 
 export default function ServicesPage() {
@@ -52,6 +54,8 @@ export default function ServicesPage() {
     active: true,
     capacity: 1,
     groupService: false,
+    pricingType: 'FIXED',
+    requiresQuote: false,
   });
 
   const loadServices = async () => {
@@ -103,6 +107,8 @@ export default function ServicesPage() {
       active: service.active !== undefined ? service.active : true,
       capacity: service.capacity || 1,
       groupService: service.groupService || false,
+      pricingType: service.pricingType || (service.requiresQuote ? 'QUOTE' : 'FIXED'),
+      requiresQuote: !!service.requiresQuote || service.pricingType === 'QUOTE',
     });
     setShowForm(true);
   };
@@ -120,6 +126,8 @@ export default function ServicesPage() {
       active: true,
       capacity: 1,
       groupService: false,
+      pricingType: 'FIXED',
+      requiresQuote: false,
     });
     setShowForm(true);
   };
@@ -144,6 +152,7 @@ export default function ServicesPage() {
       currency: (formData.currency || currency).toUpperCase(),
       capacity: formData.groupService ? formData.capacity : 1,
       maxConcurrent: formData.groupService ? formData.maxConcurrent : 1,
+      requiresQuote: formData.requiresQuote || formData.pricingType === 'QUOTE',
     };
 
     try {
@@ -304,6 +313,9 @@ export default function ServicesPage() {
                   <span className={s.groupService ? styles.badgeGroup : styles.badgeIndividual}>
                     {s.groupService ? 'GROUP' : 'INDIVIDUAL'}
                   </span>
+                  {(s.requiresQuote || s.pricingType === 'QUOTE') && (
+                    <span className={styles.badgeSuspended}>QUOTE</span>
+                  )}
                 </div>
               </div>
 
@@ -329,7 +341,11 @@ export default function ServicesPage() {
               </div>
 
               <div className={styles.cardBottom}>
-                <span className={styles.priceBadge}>{formatMoney(s.price, s.currency || currency)}</span>
+                <span className={styles.priceBadge}>
+                  {s.requiresQuote || s.pricingType === 'QUOTE'
+                    ? 'Quote required'
+                    : formatMoney(s.price, s.currency || currency)}
+                </span>
                 <div className={styles.actions}>
                   <button type="button" className="btn btn-sm btn-outline" onClick={() => handleEditClick(s)}>
                     <i className="fa-regular fa-pen-to-square" style={{ marginRight: 4 }} /> Edit
@@ -395,6 +411,7 @@ export default function ServicesPage() {
                 className="input-field"
                 value={formData.price}
                 onChange={(e) => handleInputChange('price', parseFloat(e.target.value) || 0)}
+                disabled={formData.pricingType === 'QUOTE'}
               />
             </div>
             <div className="form-group">
@@ -408,6 +425,41 @@ export default function ServicesPage() {
                 onChange={(value) => handleInputChange('currency', value)}
                 placeholder="Select currency"
               />
+            </div>
+          </div>
+
+          <div className={styles.twoCol}>
+            <div className="form-group">
+              <label className="form-label" htmlFor="pricingType">
+                Pricing type:
+              </label>
+              <CustomSelect
+                id="pricingType"
+                options={[
+                  { value: 'FIXED', label: 'Fixed price (bookable)' },
+                  { value: 'QUOTE', label: 'Quote required (not bookable yet)' },
+                ]}
+                value={formData.pricingType}
+                onChange={(value) => {
+                  handleInputChange('pricingType', value);
+                  handleInputChange('requiresQuote', value === 'QUOTE');
+                }}
+                placeholder="Select pricing"
+              />
+            </div>
+            <div className="form-group">
+              <label className={styles.checkboxRow} style={{ marginTop: 28 }}>
+                <input
+                  type="checkbox"
+                  checked={formData.requiresQuote || formData.pricingType === 'QUOTE'}
+                  onChange={(e) => {
+                    handleInputChange('requiresQuote', e.target.checked);
+                    if (e.target.checked) handleInputChange('pricingType', 'QUOTE');
+                    else if (formData.pricingType === 'QUOTE') handleInputChange('pricingType', 'FIXED');
+                  }}
+                />
+                <span className={styles.checkboxLabel}>Requires quote before booking</span>
+              </label>
             </div>
           </div>
 

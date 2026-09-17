@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { OwnerPlanProvider, useOwnerPlan } from '@/lib/owner-plan-context';
 import { OrgLocaleProvider } from '@/lib/org-locale-context';
 import { hasFeature } from '@/lib/plan';
+import { apiFetch } from '@/lib/api';
 import NotificationPanel from '@/components/NotificationPanel';
 import styles from './business-layout.module.css';
 
@@ -31,6 +32,7 @@ const OWNER_NAV: NavGroup[] = [
     icon: 'fa-chart-pie',
     children: [
       { href: '/business/dashboard', icon: 'fa-house', label: 'Dashboard' },
+      { href: '/business/analytics', icon: 'fa-chart-line', label: 'Analytics' },
       { href: '/business/plan', icon: 'fa-crown', label: 'Subscription' },
       { href: '/business/organization', icon: 'fa-building', label: 'Organization' },
       { href: '/business/verification', icon: 'fa-file-shield', label: 'Verification' },
@@ -42,7 +44,13 @@ const OWNER_NAV: NavGroup[] = [
     icon: 'fa-calendar-check',
     children: [
       { href: '/business/bookings', icon: 'fa-calendar-check', label: 'Bookings' },
-      { href: '/business/availability', icon: 'fa-calendar-days', label: 'Availability' },
+      { href: '/business/calendar', icon: 'fa-calendar-days', label: 'Calendar' },
+      { href: '/business/requests', icon: 'fa-inbox', label: 'Requests' },
+      { href: '/business/quotes', icon: 'fa-file-invoice-dollar', label: 'Quotes' },
+      { href: '/business/jobs', icon: 'fa-briefcase', label: 'Jobs' },
+      { href: '/business/customers', icon: 'fa-users', label: 'Customers' },
+      { href: '/business/availability', icon: 'fa-clock', label: 'Availability' },
+      { href: '/business/payments', icon: 'fa-wallet', label: 'Payments' },
     ],
   },
   {
@@ -51,6 +59,7 @@ const OWNER_NAV: NavGroup[] = [
     icon: 'fa-network-wired',
     children: [
       { href: '/business/branches', icon: 'fa-location-dot', label: 'Branches' },
+      { href: '/business/service-areas', icon: 'fa-map-location-dot', label: 'Service areas', entitlement: 'home_service' },
       { href: '/business/staff', icon: 'fa-user-tie', label: 'Staff' },
       { href: '/business/staff-services', icon: 'fa-handshake', label: 'Staff rates' },
     ],
@@ -92,8 +101,33 @@ function BusinessLayoutInner({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [listingMode, setListingMode] = useState<string | null>(null);
 
   const isStaff = user?.role === 'BUSINESS_STAFF';
+  const isIndividual = listingMode === 'INDIVIDUAL';
+  const navGroups = useMemo(
+    () =>
+      OWNER_NAV.map((group) => ({
+        ...group,
+        children: isIndividual
+          ? group.children.filter((child) => ![
+              '/business/branches',
+              '/business/staff',
+              '/business/staff-services',
+            ].includes(child.href))
+          : group.children,
+      })).filter((group) => group.children.length > 0),
+    [isIndividual]
+  );
+
+  useEffect(() => {
+    if (user?.role !== 'BUSINESS_OWNER') {
+      return;
+    }
+    apiFetch<{ business?: { listingMode?: string } }>('/api/provider/profile')
+      .then((profile) => setListingMode(profile.business?.listingMode || null))
+      .catch(() => setListingMode(null));
+  }, [user?.role, pathname]);
 
   useEffect(() => {
     if (!loading) {
@@ -109,14 +143,6 @@ function BusinessLayoutInner({ children }: { children: React.ReactNode }) {
       }
     }
   }, [loading, isAuthenticated, user, router, pathname, isStaff]);
-
-  useEffect(() => {
-    const next: Record<string, boolean> = {};
-    for (const group of OWNER_NAV) {
-      next[group.id] = group.children.some((c) => pathname.startsWith(c.href));
-    }
-    setOpenGroups((prev) => ({ ...prev, ...next }));
-  }, [pathname]);
 
   if (loading || !isAuthenticated || (user?.role !== 'BUSINESS_OWNER' && user?.role !== 'BUSINESS_STAFF')) {
     return (
@@ -145,7 +171,7 @@ function BusinessLayoutInner({ children }: { children: React.ReactNode }) {
 
   const flatLeaves = isStaff
     ? STAFF_LINKS
-    : OWNER_NAV.flatMap((g) => g.children);
+    : navGroups.flatMap((g) => g.children);
 
   const getPageTitle = () => {
     const match = flatLeaves.find((l) => pathname.startsWith(l.href));
@@ -228,8 +254,10 @@ function BusinessLayoutInner({ children }: { children: React.ReactNode }) {
         <nav className={styles.sidebarNav}>
           {isStaff
             ? STAFF_LINKS.map((link) => renderLeaf(link))
-            : OWNER_NAV.map((group) => {
-                const open = !collapsed && openGroups[group.id];
+            : navGroups.map((group) => {
+                const open = !collapsed && (
+                  openGroups[group.id] ?? group.children.some((child) => pathname.startsWith(child.href))
+                );
                 const shouldRenderChildren = collapsed || open;
                 return (
                   <div key={group.id} className={styles.navGroup}>
@@ -287,7 +315,7 @@ function BusinessLayoutInner({ children }: { children: React.ReactNode }) {
 
           <div className={styles.topbarActions} style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
             {!isStaff && (
-              <Link href="/profile/explore" className={styles.roleSwitchBtn} title="Switch to customer view">
+              <Link href="/profile" className={styles.roleSwitchBtn} title="Switch to customer view">
                 <i className="fa-solid fa-users"></i>
                 <span>Customer Mode</span>
               </Link>

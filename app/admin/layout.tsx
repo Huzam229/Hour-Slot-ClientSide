@@ -12,6 +12,9 @@ const LINKS = [
   { href: '/admin/users', icon: 'fa-users', label: 'User Accounts' },
   { href: '/admin/businesses', icon: 'fa-store', label: 'Businesses' },
   { href: '/admin/categories', icon: 'fa-tags', label: 'Categories' },
+  { href: '/admin/geo-areas', icon: 'fa-map-location-dot', label: 'Geo areas' },
+  { href: '/admin/disputes', icon: 'fa-scale-balanced', label: 'Disputes' },
+  { href: '/admin/community', icon: 'fa-flag', label: 'Community' },
   { href: '/admin/settings', icon: 'fa-sliders', label: 'Settings' },
   { href: '/admin/audit-logs', icon: 'fa-shield-halved', label: 'Audit Trail' },
 ];
