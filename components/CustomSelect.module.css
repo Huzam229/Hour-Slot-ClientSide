@@ -36,7 +36,7 @@
   width: 100%;
   min-height: 42px;
   padding: 10px 14px;
-  background: #ffffff;
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   color: var(--text-main);
@@ -52,13 +52,13 @@
 
 .selectTrigger:hover:not(:disabled) {
   border-color: var(--accent-primary);
-  box-shadow: 0 2px 8px rgba(26, 138, 138, 0.05);
+  box-shadow: 0 2px 8px rgba(var(--accent-primary-rgb), 0.05);
 }
 
 .selectTrigger:focus {
   outline: none;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(26, 138, 138, 0.15);
+  box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.15);
 }
 
 .triggerContent {
@@ -130,7 +130,7 @@
   align-items: center;
   padding: 8px 12px;
   border-bottom: 1px solid var(--border-color);
-  background: rgba(26, 138, 138, 0.01);
+  background: rgba(var(--accent-primary-rgb), 0.01);
   gap: 8px;
 }
 
@@ -172,12 +172,12 @@
 }
 
 .optionsList::-webkit-scrollbar-thumb {
-  background: rgba(26, 138, 138, 0.15);
+  background: rgba(var(--accent-primary-rgb), 0.15);
   border-radius: 999px;
 }
 
 .optionsList::-webkit-scrollbar-thumb:hover {
-  background: rgba(26, 138, 138, 0.3);
+  background: rgba(var(--accent-primary-rgb), 0.3);
 }
 
 .optionItem {
@@ -192,11 +192,11 @@
 }
 
 .optionItem:hover {
-  background: rgba(26, 138, 138, 0.05);
+  background: rgba(var(--accent-primary-rgb), 0.05);
 }
 
 .selectedItem {
-  background: rgba(26, 138, 138, 0.08);
+  background: rgba(var(--accent-primary-rgb), 0.08);
 }
 
 .optionInfo {

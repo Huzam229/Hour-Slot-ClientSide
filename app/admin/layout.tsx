@@ -52,7 +52,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   const handleLogout = () => {
-    document.cookie = 'hourslot_user_session=; path=/; max-age=0';
     logout();
     router.push('/auth/login');
   };
@@ -84,22 +83,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className={styles.sidebarHeader}>
           {!collapsed && (
             <Link href="/admin/dashboard" className={styles.logoArea}>
-              <img src="/logo-hourslot.png" alt="HourSlot" className={styles.logoImg} />
+              <img src="/duemet-logo-nav.png" alt="Duemet" className={styles.logoImg} />
             </Link>
           )}
-          {collapsed && (
-            <button type="button" className={styles.logoIcon} onClick={() => setCollapsed(false)} title="Expand">
-              <img src="/logo-hourslot.png" alt="HourSlot" className={styles.logoImg} />
+          {collapsed ? (
+            <button
+              type="button"
+              className={styles.logoIcon}
+              style={{ cursor: 'pointer', border: 'none', background: 'transparent', padding: 0 }}
+              onClick={() => setCollapsed(false)}
+              title="Expand sidebar"
+            >
+              <img src="/duemet-mark.png" alt="Duemet" style={{ width: 29, height: 29, objectFit: 'contain', display: 'block' }} />
+            </button>
+          ) : (
+            <button type="button" className={styles.toggleBtn} onClick={() => setCollapsed(true)} title="Collapse sidebar">
+              <i className="fa-solid fa-angles-left" />
             </button>
           )}
-          <button
-            type="button"
-            className={styles.toggleBtn}
-            onClick={() => setCollapsed(!collapsed)}
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            <i className={`fa-solid ${collapsed ? 'fa-chevron-right' : 'fa-chevron-left'}`} />
-          </button>
         </div>
 
         <nav className={styles.sidebarNav}>

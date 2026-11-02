@@ -20,7 +20,6 @@ export default function HeaderNav() {
       : pathname;
 
   const handleLogout = () => {
-    document.cookie = 'hourslot_user_session=; path=/; max-age=0';
     logout();
     router.push('/profile/explore');
   };

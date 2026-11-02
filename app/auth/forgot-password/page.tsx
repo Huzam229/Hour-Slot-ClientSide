@@ -70,7 +70,7 @@ export default function ForgotPasswordPage() {
         </div>
         <h2 className={shared.authTitle}>Forgot password?</h2>
         <p className={shared.authSubtitle}>
-          Enter your email and we&apos;ll send instructions to reset your HourSlot password.
+          Enter your email and we&apos;ll send instructions to reset your Duemet password.
         </p>
       </div>
 

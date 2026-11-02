@@ -52,6 +52,7 @@ interface BusinessProfile {
   logoUrl?: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
   verified: boolean;
+  publishStatus?: string;
   commissionRate: number;
   rating: number;
   rejectionReason?: string;
@@ -61,6 +62,14 @@ interface BusinessProfile {
   primaryCategory?: Category | null;
   secondaryCategories?: Category[];
 }
+
+type PublishReadiness = {
+  ready?: boolean;
+  blockers?: string[];
+  live?: boolean;
+  publishStatus?: string;
+  status?: string;
+};
 
 export default function BusinessDashboardPage() {
   const { format } = useOrgLocale();
@@ -81,6 +90,11 @@ export default function BusinessDashboardPage() {
     hours: 0,
   });
   const [docsReady, setDocsReady] = useState(false);
+<<<<<<< HEAD
+=======
+  const [publishReadiness, setPublishReadiness] = useState<PublishReadiness | null>(null);
+  const [listingBusy, setListingBusy] = useState(false);
+>>>>>>> upstream/main
   const [todayOps, setTodayOps] = useState<{ bookingsCount: number; jobsCount: number } | null>(null);
   const [opsStatus, setOpsStatus] = useState('AVAILABLE');
   const [savingOps, setSavingOps] = useState(false);
@@ -210,10 +224,58 @@ export default function BusinessDashboardPage() {
         primaryCategoryId: data.primaryCategory ? data.primaryCategory.id.toString() : '',
         secondaryCategoryIds: data.secondaryCategories ? data.secondaryCategories.map((c) => c.id) : [],
       });
+
+      const readiness = await apiFetch<PublishReadiness>('/api/business/publish-readiness').catch(() => null);
+      setPublishReadiness(readiness);
     } catch (err: any) {
       setError(err?.message || 'Could not load business profile. Have you registered yet?');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const publishListing = async () => {
+    setListingBusy(true);
+    setMessage(null);
+    setError(null);
+    try {
+      await apiFetch('/api/business/publish', { method: 'POST' });
+      setMessage('Your listing is live on Explore.');
+      await loadBusinessProfile();
+    } catch (err: any) {
+      setError(err?.message || 'Could not publish listing.');
+    } finally {
+      setListingBusy(false);
+    }
+  };
+
+  const unpublishListing = async () => {
+    setListingBusy(true);
+    setMessage(null);
+    setError(null);
+    try {
+      await apiFetch('/api/business/unpublish', { method: 'POST' });
+      setMessage('Listing hidden from Explore.');
+      await loadBusinessProfile();
+    } catch (err: any) {
+      setError(err?.message || 'Could not unpublish listing.');
+    } finally {
+      setListingBusy(false);
+    }
+  };
+
+  const resubmitListing = async () => {
+    setListingBusy(true);
+    setMessage(null);
+    setError(null);
+    try {
+      await apiFetch('/api/business/resubmit', { method: 'POST' });
+      setMessage('Listing submitted for review again.');
+      await loadBusinessProfile();
+    } catch (err: any) {
+      setError(err?.message || 'Could not resubmit. Re-upload rejected documents first.');
+    } finally {
+      setListingBusy(false);
     }
   };
 
@@ -325,7 +387,7 @@ export default function BusinessDashboardPage() {
         <EmptyState
           icon="fa-briefcase"
           title="No business registered"
-          description="Register your business on HourSlot to list branches, staff, and start taking bookings."
+          description="Register your business on Duemet to list branches, staff, and start taking bookings."
           actionLabel="Register Business"
           onAction={() => {
             window.location.href = '/business/register';
@@ -346,13 +408,24 @@ export default function BusinessDashboardPage() {
   const readyForReview = checklist.every((c) => c.done);
   const doneCount = checklist.filter((c) => c.done).length;
   const setupPercent = Math.round((doneCount / checklist.length) * 100);
-
-  const previewPath = business?.id ? `/profile/business/${business.id}` : '';
+  const isLive =
+    business?.status === 'APPROVED' && (business.publishStatus || '').toUpperCase() === 'PUBLISHED';
+  const previewPath = isLive && business?.id ? `/profile/business/${business.id}` : '';
 
   const handlePreviewListing = () => {
     if (!previewPath) return;
     window.open(previewPath, '_blank', 'noopener,noreferrer');
   };
+
+  const listingStatusLabel = (() => {
+    if (!business) return '';
+    if (business.status === 'PENDING') return 'Hidden while in review';
+    if (business.status === 'REJECTED') return 'Rejected — fix documents and resubmit';
+    if (business.status === 'SUSPENDED') return 'Suspended — hidden from customers';
+    if (isLive) return 'Live on Explore';
+    if (business.status === 'APPROVED') return 'Approved — hidden until you publish';
+    return business.status;
+  })();
 
   // Compute dynamic stats
   const activeBookingsCount = bookings.filter((b) => b.status === 'CONFIRMED' || b.status === 'PENDING').length;
@@ -379,36 +452,84 @@ export default function BusinessDashboardPage() {
         subtitle="Manage your business operations, listing status, and public bookings page."
       />
 
-      {business?.status === 'PENDING' && (
-        <div className={styles.statusAlertPending}>
-          <i className="fa-solid fa-clock-rotate-left" />
-          <div>
-            <strong>Listing Pending Super Admin Review</strong>
+      {business && (
+        <div
+          className={
+            business.status === 'REJECTED'
+              ? styles.statusAlertRejected
+              : business.status === 'SUSPENDED'
+                ? styles.statusAlertSuspended
+                : business.status === 'PENDING'
+                  ? styles.statusAlertPending
+                  : styles.statusAlertPending
+          }
+        >
+          <i
+            className={`fa-solid ${
+              isLive
+                ? 'fa-circle-check'
+                : business.status === 'REJECTED'
+                  ? 'fa-circle-xmark'
+                  : business.status === 'SUSPENDED'
+                    ? 'fa-triangle-exclamation'
+                    : 'fa-clock-rotate-left'
+            }`}
+          />
+          <div style={{ flex: 1 }}>
+            <strong>{listingStatusLabel}</strong>
             <p>
-              Your listing is being audited. Complete setup and upload Tier 1 documents under Verification so Super Admin can approve your listing.
+              {business.status === 'PENDING' &&
+                'Customers cannot see you yet. Complete setup and upload Tier 1 documents so Super Admin can approve the listing.'}
+              {business.status === 'REJECTED' && (
+                <>
+                  Reason: {business.rejectionReason || 'Details require revision'}. Re-upload rejected documents under{' '}
+                  <Link href="/business/verification">Verification</Link>, then resubmit for review.
+                </>
+              )}
+              {business.status === 'SUSPENDED' &&
+                'Your listing is hidden from search and booking is locked. Contact support for assistance.'}
+              {business.status === 'APPROVED' && !isLive && (
+                <>
+                  Platform approval is done. Publish when services, hours, and a location or service area are ready.
+                  {(publishReadiness?.blockers || []).length > 0 && (
+                    <> Missing: {(publishReadiness?.blockers || []).join(' ')}</>
+                  )}
+                </>
+              )}
+              {isLive && 'Customers can find and book you on Explore.'}
+              {business.verified ? ' Verified badge is on.' : ''}
             </p>
-          </div>
-        </div>
-      )}
-
-      {business?.status === 'REJECTED' && (
-        <div className={styles.statusAlertRejected}>
-          <i className="fa-solid fa-circle-xmark" />
-          <div>
-            <strong>Registration Update Requested</strong>
-            <p>
-              Reason: {business.rejectionReason || 'Details require revision'}. Update your license details or verification files below, then submit for review.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {business?.status === 'SUSPENDED' && (
-        <div className={styles.statusAlertSuspended}>
-          <i className="fa-solid fa-triangle-exclamation" />
-          <div>
-            <strong>Account Temporarily Suspended</strong>
-            <p>Your listing is hidden from search and client booking is locked. Contact support for assistance.</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
+              {business.status === 'REJECTED' && (
+                <button type="button" className="btn btn-primary btn-sm" disabled={listingBusy} onClick={() => void resubmitListing()}>
+                  {listingBusy ? 'Submitting…' : 'Resubmit for review'}
+                </button>
+              )}
+              {business.status === 'APPROVED' && !isLive && (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  disabled={listingBusy || publishReadiness?.ready === false}
+                  title={(publishReadiness?.blockers || []).join(' ') || 'Publish to Explore'}
+                  onClick={() => void publishListing()}
+                >
+                  {listingBusy ? 'Publishing…' : 'Publish listing'}
+                </button>
+              )}
+              {isLive && (
+                <>
+                  <button type="button" className="btn btn-outline btn-sm" onClick={handlePreviewListing}>
+                    View public profile
+                  </button>
+                  <button type="button" className="btn btn-outline btn-sm" disabled={listingBusy} onClick={() => void unpublishListing()}>
+                    Unpublish
+                  </button>
+                </>
+              )}
+              <Link href="/business/verification" className="btn btn-outline btn-sm">
+                Verification
+              </Link>
+            </div>
           </div>
         </div>
       )}

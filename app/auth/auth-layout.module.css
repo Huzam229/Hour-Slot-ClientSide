@@ -1,151 +1,363 @@
+/* Auth visual system — coastal ink + mist form plane */
+
 .shell {
+  --auth-ink: var(--text-main);
+  --auth-ink-mid: #1f2937;
+  --auth-teal: var(--accent-primary);
+  --auth-mint: #3b82f6;
+  --auth-mist: var(--bg-primary);
+  --auth-paper: var(--bg-card);
+  --auth-line: rgba(17, 24, 39, 0.08);
+  --auth-soft: rgba(var(--accent-primary-rgb), 0.09);
+
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
-  grid-template-columns: 1.05fr 0.95fr;
+  grid-template-columns: minmax(0, 0.4fr) minmax(0, 0.6fr);
+  background: var(--auth-mist);
+  font-size: 15.4px; /* ~10% over base 14px */
 }
 
-.brandPanel {
-  position: relative;
-  background:
-    radial-gradient(ellipse 90% 70% at 10% 10%, rgba(91, 184, 140, 0.2), transparent 55%),
-    linear-gradient(165deg, #0a3535 0%, #145454 55%, #1a8a8a 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 56px;
+.shell,
+.shell :global(h1),
+.shell :global(h2),
+.shell :global(h3),
+.shell :global(p),
+.shell :global(a),
+.shell :global(span),
+.shell :global(li),
+.shell :global(label),
+.shell :global(button),
+.shell :global(input),
+.shell :global(select),
+.shell :global(textarea),
+.shell :global(strong),
+.shell :global(small) {
+  text-transform: none;
+}
+
+.shellRegister {
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
   overflow: hidden;
 }
 
-.brandPanel::after {
-  content: '';
+/* —— Brand panel —— */
+.brandPanel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 36px clamp(24px, 3vw, 44px);
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(160deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.brandGlow,
+.brandOrbA,
+.brandOrbB {
+  display: none;
+}
+
+.brandOrbA,
+.brandOrbB {
   position: absolute;
-  inset: 0;
-  background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.035' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E");
+  border-radius: 50%;
   pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.brandOrbA {
+  width: 280px;
+  height: 280px;
+  bottom: -80px;
+  left: -60px;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.12), transparent 60%);
+  animation: authFloat 14s ease-in-out infinite;
+}
+
+.brandOrbB {
+  width: 160px;
+  height: 160px;
+  top: 18%;
+  right: 8%;
+  background: radial-gradient(circle at 40% 40%, rgba(59, 130, 246, 0.25), transparent 70%);
+  animation: authFloat 11s ease-in-out infinite reverse;
+}
+
+.brandGrid {
+  display: none;
 }
 
 .brandInner {
   position: relative;
   z-index: 1;
-  max-width: 420px;
-  animation: hsFadeUp 0.5s ease both;
+  max-width: 360px;
+  animation: authRise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.brandMark {
+  display: inline-block;
+  margin-bottom: 22px;
+  transition: transform 0.25s ease;
+}
+
+.brandMark:hover {
+  transform: translateY(-2px);
 }
 
 .brandLogo {
-  height: 52px;
+  height: 36px;
   width: auto;
-  margin-bottom: 40px;
   object-fit: contain;
-  background: #fff;
-  padding: 8px 16px;
-  border-radius: 14px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  object-position: left center;
+  display: block;
+}
+
+.brandEyebrow {
+  margin: 0 0 12px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.62);
 }
 
 .brandTitle {
-  color: #fff;
-  font-size: clamp(1.85rem, 3vw, 2.35rem);
-  font-weight: 800;
+  margin: 0 0 14px;
+  font-size: clamp(1.9rem, 2.8vw, 2.45rem);
+  font-weight: 700;
   letter-spacing: -0.03em;
-  margin: 0 0 16px;
-  line-height: 1.12;
+  line-height: 1.1;
+  color: #fff;
+}
+
+.brandTitleAccent {
+  display: block;
+  color: #93c5fd;
 }
 
 .brandCopy {
-  color: rgba(255, 255, 255, 0.88);
+  margin: 0 0 20px;
+  max-width: 34ch;
   font-size: 1.02rem;
-  line-height: 1.65;
-  margin: 0 0 32px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.78);
+  font-weight: 400;
 }
 
 .featureList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  list-style: none;
-  padding: 0;
-  margin: 0;
+  gap: 8px;
 }
 
 .featureItem {
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 0.9rem;
-  line-height: 1.45;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  animation: authRise 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.featureItem:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.14);
+  transform: translateX(4px);
 }
 
 .featureIcon {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(8px);
-  display: grid;
-  place-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  font-size: 0.95rem;
+  color: #eff6ff;
+  line-height: 0;
+  overflow: hidden;
+}
+
+.featureIcon i,
+.featureIcon :global(i) {
+  font-family: 'Font Awesome 6 Free' !important;
+  font-weight: 900 !important;
+  font-size: 1rem !important;
+  line-height: 1 !important;
+  width: auto !important;
+  height: auto !important;
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: center;
+}
+
+.featureCopy {
+  min-width: 0;
+  flex: 1;
+}
+
+.featureCopy strong {
+  display: block;
+  font-size: 0.98rem;
+  font-weight: 600;
+  margin-bottom: 2px;
   color: #fff;
 }
 
-.featureItem strong {
-  display: block;
-  font-size: 0.92rem;
-  margin-bottom: 2px;
+.featureCopy p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.68);
+  font-weight: 400;
 }
 
-.featureItem span {
-  color: rgba(255, 255, 255, 0.75);
+.brandFoot {
+  position: relative;
+  z-index: 1;
+  margin: 24px 0 0;
   font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.42);
 }
 
+/* —— Form panel —— */
 .formPanel {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px 36px;
-  background: var(--bg-atmosphere);
-  background-color: var(--bg-primary);
+  padding: 40px 32px;
+  overflow: hidden;
+  background: var(--auth-mist);
+}
+
+.formAtmosphere {
+  display: none;
+}
+
+.formInner {
   position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 460px;
+  animation: authRise 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+}
+
+.formPanelRegister {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  padding: 20px 36px;
+  justify-content: center;
+}
+
+.formPanelRegister .mobileBrand {
+  margin-bottom: 8px;
+}
+
+.formPanelRegister .mobileLogo {
+  height: 28px;
+}
+
+.formInnerWide {
+  max-width: min(820px, 100%);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
 }
 
 .mobileBrand {
   display: none;
-  margin-bottom: 24px;
+  position: relative;
+  z-index: 1;
+  margin-bottom: 20px;
 }
 
 .mobileLogo {
-  height: 40px;
+  height: 28px;
   width: auto;
-  background: #fff;
-  padding: 6px 12px;
-  border-radius: 10px;
-  box-shadow: var(--card-shadow);
-}
-
-.formInner {
-  width: 100%;
-  max-width: 440px;
-  animation: hsScaleIn 0.35s ease both;
+  object-fit: contain;
+  display: block;
 }
 
 .formFooter {
-  margin-top: 28px;
+  position: relative;
+  z-index: 1;
+  margin-top: 24px;
   text-align: center;
-  font-size: 0.82rem;
+  font-size: 0.9rem;
   color: var(--text-muted);
 }
 
 .formFooter a {
-  color: var(--accent-primary);
-  font-weight: 600;
+  color: var(--auth-teal);
+  font-weight: 500;
   text-decoration: none;
+  transition: color 0.15s ease;
 }
 
 .formFooter a:hover {
-  text-decoration: underline;
+  color: var(--auth-ink-mid);
+}
+
+@keyframes authRise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes authFloat {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(12px, -16px);
+  }
+}
+
+@keyframes authGlow {
+  from {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+@media (max-width: 1080px) {
+  .shell {
+    grid-template-columns: minmax(0, 0.38fr) minmax(0, 0.62fr);
+  }
+
+  .brandTitle {
+    font-size: clamp(1.7rem, 2.6vw, 2.15rem);
+  }
 }
 
 @media (max-width: 960px) {
@@ -164,6 +376,14 @@
   .formPanel {
     min-height: 100vh;
     min-height: 100dvh;
-    padding: 24px 16px calc(32px + env(safe-area-inset-bottom));
+    padding: 24px 16px calc(28px + env(safe-area-inset-bottom));
+  }
+
+  .formPanelRegister {
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  }
+
+  .shellRegister {
+    height: 100dvh;
   }
 }

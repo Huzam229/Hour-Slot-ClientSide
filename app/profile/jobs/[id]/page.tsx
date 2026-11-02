@@ -11,6 +11,7 @@ import StatusBadge from '@/components/StatusBadge';
 import FormField from '@/components/FormField';
 import { formatMoney } from '@/lib/money';
 import styles from '@/app/phase1.module.css';
+import JobExtras, { type JobExtrasDetail } from '@/components/jobs/JobExtras';
 
 type Job = {
   id: number;
@@ -57,7 +58,7 @@ type MediaItem = {
   mimeType?: string;
 };
 
-type JobDetail = {
+type JobDetail = Omit<JobExtrasDetail, 'job'> & {
   job?: Job;
   history?: HistoryItem[];
   notes?: NoteItem[];
@@ -239,6 +240,15 @@ export default function CustomerJobDetailPage() {
           </div>
         </div>
       </section>
+
+      <JobExtras
+        detail={detail}
+        role="customer"
+        onChanged={async (msg) => {
+          setMessage(msg);
+          await load();
+        }}
+      />
 
       {media.length > 0 && (
         <section className={styles.section}>

@@ -41,7 +41,7 @@
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: rgba(26, 138, 138, 0.08);
+  background: rgba(var(--accent-primary-rgb), 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -99,7 +99,7 @@
 }
 
 .slugBadge {
-  background: rgba(26, 138, 138, 0.08);
+  background: rgba(var(--accent-primary-rgb), 0.08);
   color: var(--accent-primary) !important;
   font-family: var(--font-mono, monospace);
   font-size: 0.8rem;
@@ -109,7 +109,7 @@
 }
 
 .noteBox {
-  background: rgba(26, 138, 138, 0.02);
+  background: rgba(var(--accent-primary-rgb), 0.02);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 16px;
@@ -132,7 +132,7 @@
   font-size: 0.9rem;
   color: var(--text-main);
   font-weight: 700;
-  background: #ffffff;
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
   padding: 4px 8px;
   border-radius: 6px;

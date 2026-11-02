@@ -49,6 +49,17 @@ interface Booking {
   currency?: string;
 }
 
+type WaitlistEntry = {
+  id: number;
+  businessId: number;
+  branchId: number;
+  serviceId: number;
+  desiredDate: string;
+  status: string;
+  businessName: string;
+  serviceName: string;
+};
+
 function MyBookingsContent() {
   const searchParams = useSearchParams();
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -77,9 +88,57 @@ function MyBookingsContent() {
 
   const [cancelId, setCancelId] = useState<number | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
+  const [cancelMessage, setCancelMessage] = useState('Are you sure you want to cancel this appointment? This cannot be undone.');
+  const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
+
+  const loadWaitlist = async () => {
+    try {
+      setWaitlist(await apiFetch<WaitlistEntry[]>('/api/customer/waitlist'));
+    } catch {
+      setWaitlist([]);
+    }
+  };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadWaitlist();
+  }, []);
+
+  /** Show what the provider's cancellation policy means for this booking before confirming. */
+  const openCancel = async (bookingId: number) => {
+    setCancelMessage('Are you sure you want to cancel this appointment? This cannot be undone.');
+    setCancelId(bookingId);
+    try {
+      const preview = await apiFetch<{ late: boolean; fee: number; currency?: string; freeCancelHours: number }>(
+        `/api/customer/bookings/${bookingId}/cancel-preview`
+      );
+      if (preview.late) {
+        setCancelMessage(
+          Number(preview.fee) > 0
+            ? `This is within ${preview.freeCancelHours} hours of your appointment, so the provider's late-cancellation fee of ${preview.currency || ''} ${preview.fee} applies. Cancel anyway?`
+            : `This is within the provider's ${preview.freeCancelHours}-hour cancellation window and will count as a late cancellation. Cancel anyway?`
+        );
+      } else if (preview.freeCancelHours > 0) {
+        setCancelMessage(`Cancelling now is free (more than ${preview.freeCancelHours} hours before). Cancel this appointment?`);
+      }
+    } catch {
+      // keep the default message
+    }
+  };
   const [payingId, setPayingId] = useState<number | null>(null);
 
   const paymentStatus = searchParams.get('payment');
+  const seriesBooked = searchParams.get('series');
+  const seriesSkipped = searchParams.get('skipped');
+  useEffect(() => {
+    if (seriesBooked) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSuccess(
+        `Booked ${seriesBooked} repeat appointments.` +
+          (seriesSkipped ? ` ${seriesSkipped} date(s) were already taken and were skipped.` : '')
+      );
+    }
+  }, [seriesBooked, seriesSkipped]);
   useEffect(() => {
     if (paymentStatus === 'success') setSuccess('Payment completed successfully.');
     if (paymentStatus === 'cancelled') setError('Online payment was cancelled.');
@@ -150,8 +209,8 @@ function MyBookingsContent() {
     setError(null);
     setSuccess(null);
     try {
-      await apiFetch(`/api/customer/bookings/${cancelId}/cancel`, { method: 'PUT' });
-      setSuccess('Appointment cancelled successfully.');
+      const res = await apiFetch<{ message?: string }>(`/api/customer/bookings/${cancelId}/cancel`, { method: 'PUT' });
+      setSuccess(res?.message || 'Appointment cancelled successfully.');
       setCancelId(null);
       await loadBookings();
     } catch (err: any) {
@@ -245,6 +304,35 @@ function MyBookingsContent() {
       {error && (
         <div className={styles.toastError}>
           <i className="fa-solid fa-triangle-exclamation" /> {error}
+        </div>
+      )}
+
+      {waitlist.length > 0 && (
+        <div className={styles.toastSuccess} style={{ display: 'grid', gap: 6 }}>
+          <strong><i className="fa-solid fa-hourglass-half" /> Waitlist</strong>
+          {waitlist.map((w) => (
+            <div key={w.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+              <span>
+                {w.serviceName} at {w.businessName} · {w.desiredDate}
+                {w.status === 'NOTIFIED' ? ' — a slot opened, book it now!' : ' — waiting for a free slot'}
+              </span>
+              <span style={{ display: 'flex', gap: 6 }}>
+                {w.status === 'NOTIFIED' && (
+                  <a className="btn btn-primary btn-sm"
+                    href={`/profile/book/${w.businessId}?serviceId=${w.serviceId}&branchId=${w.branchId}&date=${w.desiredDate}&step=schedule`}>
+                    Book
+                  </a>
+                )}
+                <button type="button" className="btn btn-outline btn-sm"
+                  onClick={async () => {
+                    await apiFetch(`/api/customer/waitlist/${w.id}`, { method: 'DELETE' }).catch(() => undefined);
+                    await loadWaitlist();
+                  }}>
+                  Leave
+                </button>
+              </span>
+            </div>
+          ))}
         </div>
       )}
 
@@ -343,7 +431,7 @@ function MyBookingsContent() {
                       <button
                         type="button"
                         className={`btn btn-outline btn-sm ${styles.cancelBtn}`}
-                        onClick={() => setCancelId(b.id)}
+                        onClick={() => void openCancel(b.id)}
                       >
                         Cancel
                       </button>
@@ -475,7 +563,7 @@ function MyBookingsContent() {
       <ConfirmDialog
         open={cancelId != null}
         title="Cancel appointment?"
-        message="Are you sure you want to cancel this appointment? This cannot be undone."
+        message={cancelMessage}
         confirmLabel="Cancel booking"
         danger
         loading={cancelLoading}

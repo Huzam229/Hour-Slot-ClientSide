@@ -48,7 +48,7 @@ function idsMatch(a: string | number | null | undefined, b: string | number | nu
 }
 
 function pinIcon(selected: boolean) {
-  const fill = selected ? '#0f5c5c' : '#1a8a8a';
+  const fill = selected ? '#1d4ed8' : '#3b82f6';
   const w = selected ? 27 : 24;
   const h = selected ? 40 : 36;
   return L.divIcon({

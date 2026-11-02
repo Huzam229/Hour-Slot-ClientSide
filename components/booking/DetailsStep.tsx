@@ -96,7 +96,11 @@ export default function DetailsStep({
               <strong>Any available specialist</strong>
               <span>Show combined open times for everyone who offers this service</span>
             </div>
-            {selectedStaffId === ANY_STAFF_ID && <i className={`fa-solid fa-check ${styles.staffCheck}`} />}
+            {selectedStaffId === ANY_STAFF_ID && (
+              <span className={styles.staffCheck} aria-hidden>
+                <i className="fa-solid fa-check" />
+              </span>
+            )}
           </button>
           {branchStaff.length === 0 ? (
             <EmptyState
@@ -132,7 +136,11 @@ export default function DetailsStep({
                     )}
                     {!offers && <span className={styles.staffWarn}>Does not offer this service</span>}
                   </div>
-                  {on && <i className={`fa-solid fa-check ${styles.staffCheck}`} />}
+                  {on && (
+                    <span className={styles.staffCheck} aria-hidden>
+                      <i className="fa-solid fa-check" />
+                    </span>
+                  )}
                 </button>
               );
             })

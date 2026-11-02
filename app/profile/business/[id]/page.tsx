@@ -133,6 +133,7 @@ export default function BusinessProfilePage() {
   const searchParams = useSearchParams();
 
   const [profile, setProfile] = useState<BusinessProfile | null>(null);
+  const [reliability, setReliability] = useState<number | null>(null);
   const [favorites, setFavorites] = useState<number[]>([]);
   const [workingHours, setWorkingHours] = useState<WorkingHour[]>([]);
   const [selectedBranchId, setSelectedBranchId] = useState<string>('');
@@ -199,6 +200,9 @@ export default function BusinessProfilePage() {
       ]);
       setProfile(profileData);
       setFavorites(favData.map((f) => f.business.id));
+      apiFetch<{ reliabilityScore: number | null }>(`/api/public/businesses/${id}/booking-terms`, { skipAuth: true })
+        .then((t) => setReliability(t?.reliabilityScore ?? null))
+        .catch(() => setReliability(null));
       if (profileData.branches.length > 0) {
         const requested = searchParams.get('branchId');
         const match = requested && profileData.branches.some((b) => String(b.id) === requested);
@@ -489,6 +493,14 @@ export default function BusinessProfilePage() {
                 {averageRating > 0 ? averageRating.toFixed(1) : 'New'}
                 {reviews.length > 0 && ` (${reviews.length})`}
               </span>
+              {reliability != null && (
+                <>
+                  <span className={styles.metaDot} />
+                  <span className={styles.metaItem} title="Share of bookings kept in the last 12 months">
+                    <i className="fa-solid fa-calendar-check" /> Keeps {reliability}% of bookings
+                  </span>
+                </>
+              )}
               {categoryName && (
                 <>
                   <span className={styles.metaDot} />

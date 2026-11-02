@@ -527,7 +527,7 @@ export default function BookingsPage() {
               </div>
             </div>
             <div className={styles.statCard}>
-              <div className={styles.statIcon} style={{ background: 'linear-gradient(135deg, #0d9488 0%, #10b981 100%)' }}>
+              <div className={styles.statIcon} style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #10b981 100%)' }}>
                 <i className="fa-solid fa-circle-check" />
               </div>
               <div className={styles.statInfo}>
@@ -545,7 +545,7 @@ export default function BookingsPage() {
               </div>
             </div>
             <div className={styles.statCard}>
-              <div className={styles.statIcon} style={{ background: 'linear-gradient(135deg, #0f7676 0%, #3b82f6 100%)' }}>
+              <div className={styles.statIcon} style={{ background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)' }}>
                 <i className="fa-solid fa-clock" />
               </div>
               <div className={styles.statInfo}>

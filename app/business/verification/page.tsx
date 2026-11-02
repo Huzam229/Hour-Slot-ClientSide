@@ -47,6 +47,9 @@ export default function VerificationPage() {
   const [documentType, setDocumentType] = useState('OWNER_GOVERNMENT_ID');
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [listingStatus, setListingStatus] = useState<string | null>(null);
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
+  const [resubmitting, setResubmitting] = useState(false);
 
   const tier1Types = data?.tier1Types?.length
     ? data.tier1Types
@@ -66,8 +69,13 @@ export default function VerificationPage() {
     setLoading(true);
     setError(null);
     try {
-      const payload = await apiFetch<Payload>('/api/business/verification-documents');
+      const [payload, profile] = await Promise.all([
+        apiFetch<Payload>('/api/business/verification-documents'),
+        apiFetch<{ status?: string; rejectionReason?: string }>('/api/business/profile').catch(() => null),
+      ]);
       setData(payload);
+      setListingStatus(profile?.status || null);
+      setRejectionReason(profile?.rejectionReason || null);
       const types = payload.requiredTypes?.length
         ? payload.requiredTypes
         : [...(payload.tier1Types || []), ...(payload.tier2Types || [])];
@@ -79,6 +87,22 @@ export default function VerificationPage() {
       setError(e?.message || 'Could not load verification documents.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const resubmitListing = async () => {
+    setResubmitting(true);
+    setError(null);
+    setMessage(null);
+    try {
+      await apiFetch('/api/business/resubmit', { method: 'POST' });
+      setMessage('Listing submitted for review again.');
+      await load();
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      setError(e?.message || 'Could not resubmit. Re-upload rejected documents first.');
+    } finally {
+      setResubmitting(false);
     }
   };
 
@@ -99,17 +123,8 @@ export default function VerificationPage() {
       const body = new FormData();
       body.append('documentType', documentType);
       body.append('file', file);
-      const token = (() => {
-        try {
-          const raw = localStorage.getItem('hourslot_user_session');
-          return raw ? (JSON.parse(raw).token as string) : null;
-        } catch {
-          return null;
-        }
-      })();
       const res = await fetch('/api/business/verification-documents', {
         method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         body,
       });
       const json = await res.json().catch(() => ({}));
@@ -154,6 +169,18 @@ export default function VerificationPage() {
       {error && (
         <div className="error-alert">
           <i className="fa-solid fa-triangle-exclamation" /> {error}
+        </div>
+      )}
+
+      {listingStatus === 'REJECTED' && (
+        <div className="error-alert" style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
+          <div style={{ flex: 1 }}>
+            <strong>Listing rejected</strong>
+            <div>{rejectionReason || 'Update the rejected documents, then resubmit for review.'}</div>
+          </div>
+          <button type="button" className="btn btn-primary btn-sm" disabled={resubmitting} onClick={() => void resubmitListing()}>
+            {resubmitting ? 'Submitting…' : 'Resubmit for review'}
+          </button>
         </div>
       )}
 

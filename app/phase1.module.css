@@ -5,6 +5,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  animation: hsSlideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .publicPage {
@@ -48,7 +49,7 @@
   color: #fff;
   background:
     radial-gradient(circle at 90% 10%, rgba(249, 115, 22, 0.34), transparent 32%),
-    linear-gradient(135deg, #102e38, #174b50);
+    linear-gradient(135deg, #1f2937, #1f2937);
   box-shadow: var(--glass-shadow);
 }
 
@@ -65,7 +66,7 @@
 }
 
 .eyebrow {
-  color: #8ce3d0;
+  color: #93c5fd;
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.12em;

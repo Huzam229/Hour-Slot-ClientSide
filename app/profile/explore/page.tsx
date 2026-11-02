@@ -103,7 +103,7 @@ export default function ExplorePage() {
       const rated = withExploreMeta(branchData);
       setBranches(rated);
       setCategories(catData);
-      setFavorites(favData.map((f) => f.business.id));
+      setFavorites(favData.map((f) => f.business?.id).filter((id): id is number => id != null));
       setIsSearchActive(queryVal !== '');
       setLocationLabel('Near you');
       setSelectedId(null);
@@ -133,7 +133,7 @@ export default function ExplorePage() {
       const rated = withExploreMeta(branchData);
       setBranches(rated);
       setCategories(catData);
-      setFavorites(favData.map((f) => f.business.id));
+      setFavorites(favData.map((f) => f.business?.id).filter((id): id is number => id != null));
       setIsSearchActive(isSearching || queryVal !== '');
       setSelectedId(null);
       setHoveredId(null);
@@ -217,17 +217,17 @@ export default function ExplorePage() {
         }
       }
       if (!q) {
-        const raw = sessionStorage.getItem('hourslot_explore_q');
+        const raw = sessionStorage.getItem('duemet_explore_q');
         if (raw) {
-          sessionStorage.removeItem('hourslot_explore_q');
+          sessionStorage.removeItem('duemet_explore_q');
           const parsed = JSON.parse(raw);
           q = typeof parsed === 'string' ? parsed : parsed?.q || '';
         }
       }
       if (latParam == null) {
-        const rawCoords = sessionStorage.getItem('hourslot_explore_coords');
+        const rawCoords = sessionStorage.getItem('duemet_explore_coords');
         if (rawCoords) {
-          sessionStorage.removeItem('hourslot_explore_coords');
+          sessionStorage.removeItem('duemet_explore_coords');
           const parsed = JSON.parse(rawCoords) as { lat?: number; lon?: number };
           if (typeof parsed.lat === 'number' && typeof parsed.lon === 'number') {
             latParam = parsed.lat;
@@ -270,7 +270,7 @@ export default function ExplorePage() {
 
   useEffect(() => {
     try {
-      const stored = sessionStorage.getItem('hourslot_explore_split_pct');
+      const stored = sessionStorage.getItem('duemet_explore_split_pct');
       if (!stored) return;
       const n = Number(stored);
       if (Number.isFinite(n) && n >= 32 && n <= 72) {
@@ -305,7 +305,7 @@ export default function ExplorePage() {
       e.currentTarget.releasePointerCapture(e.pointerId);
     }
     try {
-      sessionStorage.setItem('hourslot_explore_split_pct', String(listPctRef.current));
+      sessionStorage.setItem('duemet_explore_split_pct', String(listPctRef.current));
     } catch {
       /* ignore */
     }
@@ -469,6 +469,11 @@ export default function ExplorePage() {
         <div className={styles.popularCardContent}>
           <h4>
             {b.business.name}
+            {b.business.isOnline ? (
+              <span title="Online now" style={{ marginLeft: 6, color: '#16a34a', fontSize: '0.75em' }}>
+                <i className="fa-solid fa-circle" style={{ fontSize: '0.55em', verticalAlign: 'middle' }} /> Online
+              </span>
+            ) : null}
             {b.business.verified ? (
               <i
                 className="fa-solid fa-circle-check"
@@ -533,6 +538,11 @@ export default function ExplorePage() {
           </div>
           <Link href={href} className={styles.resultName} onClick={(e) => e.stopPropagation()}>
             {b.business.name}
+            {b.business.isOnline ? (
+              <span title="Online now" style={{ marginLeft: 6, color: '#16a34a', fontSize: '0.75em' }}>
+                <i className="fa-solid fa-circle" style={{ fontSize: '0.55em', verticalAlign: 'middle' }} /> Online
+              </span>
+            ) : null}
             {b.business.verified ? (
               <i
                 className="fa-solid fa-circle-check"
@@ -583,30 +593,6 @@ export default function ExplorePage() {
               {locationLabel}
             </span>
           </header>
-
-          <div className={styles.dashStats}>
-            <div className={`${styles.dashStat} ${styles.dashStatTeal}`}>
-              <i className="fa-solid fa-store" />
-              <div>
-                <strong>{sortedBranches.length}</strong>
-                <span>Results</span>
-              </div>
-            </div>
-            <div className={`${styles.dashStat} ${styles.dashStatRose}`}>
-              <i className="fa-solid fa-heart" />
-              <div>
-                <strong>{favorites.length}</strong>
-                <span>Saved</span>
-              </div>
-            </div>
-            <div className={`${styles.dashStat} ${styles.dashStatIndigo}`}>
-              <i className="fa-solid fa-ruler" />
-              <div>
-                <strong>{radiusKm} km</strong>
-                <span>Radius</span>
-              </div>
-            </div>
-          </div>
 
           <form onSubmit={handleSearchSubmit} className={styles.findSearch}>
             <i className="fa-solid fa-magnifying-glass" aria-hidden />
@@ -978,7 +964,7 @@ export default function ExplorePage() {
 
         <footer className={styles.appFootnote}>
           <Link href="/" className={styles.homeLink}>
-            <i className="fa-solid fa-arrow-left" /> HourSlot home
+            <i className="fa-solid fa-arrow-left" /> Duemet home
           </Link>
           <span>New here? Read about the product on the landing page.</span>
         </footer>

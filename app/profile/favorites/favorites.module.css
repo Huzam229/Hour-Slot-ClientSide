@@ -16,11 +16,21 @@
   flex-direction: column;
   justify-content: space-between;
   min-height: 200px;
-  transition: var(--transition-fast);
+  transition: border-color 0.2s ease, box-shadow 0.22s ease, transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: hsRiseIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.favGrid .favCard:nth-child(1) { animation-delay: 0.03s; }
+.favGrid .favCard:nth-child(2) { animation-delay: 0.08s; }
+.favGrid .favCard:nth-child(3) { animation-delay: 0.13s; }
+.favGrid .favCard:nth-child(4) { animation-delay: 0.18s; }
+.favGrid .favCard:nth-child(5) { animation-delay: 0.23s; }
+.favGrid .favCard:nth-child(n + 6) { animation-delay: 0.28s; }
+
 .favCard:hover {
-  border-color: rgba(26, 138, 138, 0.3);
+  border-color: rgba(var(--accent-primary-rgb), 0.3);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(17, 24, 39, 0.08);
 }
 
 .cardHeader {
@@ -36,7 +46,7 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--accent-primary);
-  background: rgba(26, 138, 138, 0.1);
+  background: rgba(var(--accent-primary-rgb), 0.1);
   padding: 3px 8px;
   border-radius: 6px;
 }

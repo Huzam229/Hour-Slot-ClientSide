@@ -6,14 +6,14 @@
   margin-bottom: 20px;
   border-radius: 16px;
   background: var(--tint-teal);
-  border: 1px solid rgba(26, 138, 138, 0.14);
+  border: 1px solid rgba(var(--accent-primary-rgb), 0.14);
 }
 
 .inviteBannerIcon {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: rgba(26, 138, 138, 0.12);
+  background: rgba(var(--accent-primary-rgb), 0.12);
   color: var(--accent-primary);
   display: grid;
   place-items: center;

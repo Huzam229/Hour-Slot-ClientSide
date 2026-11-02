@@ -33,6 +33,8 @@ type Props = {
   geocodeOnCity?: boolean;
   onGeocoded?: (coords: { lat: number; lon: number; displayName: string }) => void;
   helperPrefix?: string;
+  /** Dense layout for tight auth/register screens — no helper text. */
+  compact?: boolean;
 };
 
 export default function GeoFields({
@@ -43,6 +45,7 @@ export default function GeoFields({
   geocodeOnCity = false,
   onGeocoded,
   helperPrefix,
+  compact = false,
 }: Props) {
   const [countries, setCountries] = useState<CountryView[]>([]);
   const [currencies, setCurrencies] = useState<CurrencyView[]>([]);
@@ -192,46 +195,60 @@ export default function GeoFields({
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-        gap: '16px',
+        gridTemplateColumns: compact
+          ? showCurrency
+            ? 'repeat(3, minmax(0, 1fr))'
+            : 'repeat(2, minmax(0, 1fr))'
+          : 'repeat(auto-fit, minmax(220px, 1fr))',
+        gap: compact ? '8px' : '16px',
       }}
     >
-      <div className="form-group">
-        <label className="form-label">Country</label>
+      <div className="form-group" style={compact ? { marginBottom: 0, gap: 3 } : undefined}>
+        <label className="form-label" style={compact ? { fontSize: '0.72rem' } : undefined}>
+          Country
+        </label>
         <CustomSelect
           options={countries.map((c) => ({
             value: c.code,
             label: c.name,
             sublabel: c.code,
-            icon: c.flag ? <span style={{ fontSize: '1.2rem' }}>{c.flag}</span> : undefined,
+            icon: c.flag ? <span style={{ fontSize: '1.05rem' }}>{c.flag}</span> : undefined,
           }))}
           value={value.countryCode}
           onChange={handleCountryChange}
           placeholder="Select country"
           loading={loadingCountries}
         />
-        <p className="input-helper" style={{ marginTop: 6, color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-          {hint}Loads official states, provinces, and currencies for this country.
-        </p>
+        {!compact && (
+          <p className="input-helper" style={{ marginTop: 6, color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+            {hint}Loads official states, provinces, and currencies for this country.
+          </p>
+        )}
       </div>
 
       {showCurrency && (
-        <div className="form-group">
-          <label className="form-label">Currency</label>
+        <div className="form-group" style={compact ? { marginBottom: 0, gap: 3 } : undefined}>
+          <label className="form-label" style={compact ? { fontSize: '0.72rem' } : undefined}>
+            Currency
+          </label>
           <CustomSelect
             options={currencyOptions}
             value={value.currency || ''}
             onChange={(currency) => onChange({ ...value, currency })}
             placeholder="Select currency"
           />
-          <p className="input-helper" style={{ marginTop: 6, color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-            Prices, bookings, and payouts for this business use this currency.
-          </p>
+          {!compact && (
+            <p className="input-helper" style={{ marginTop: 6, color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+              Prices, bookings, and payouts for this business use this currency.
+            </p>
+          )}
         </div>
       )}
 
-      <div className="form-group">
-        <label className="form-label">State / Province / Region</label>
+      <div className="form-group" style={compact ? { marginBottom: 0, gap: 3 } : undefined}>
+        <label className="form-label" style={compact ? { fontSize: '0.72rem' } : undefined}>
+          State / Region
+        </label>
         <CustomSelect
           options={states.map((s) => ({ value: s.name, label: s.name }))}
           value={value.region}
@@ -242,8 +259,10 @@ export default function GeoFields({
         />
       </div>
 
-      <div className="form-group">
-        <label className="form-label">City</label>
+      <div className="form-group" style={compact ? { marginBottom: 0, gap: 3 } : undefined}>
+        <label className="form-label" style={compact ? { fontSize: '0.72rem' } : undefined}>
+          City
+        </label>
         <CustomSelect
           options={cities.map((c) => ({ value: c, label: c }))}
           value={value.city}
@@ -255,8 +274,17 @@ export default function GeoFields({
       </div>
 
       {showTimezone && (
-        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-          <label className="form-label">Timezone</label>
+        <div
+          className="form-group"
+          style={{
+            gridColumn: compact ? (showCurrency ? 'span 2' : '1 / -1') : '1 / -1',
+            marginBottom: compact ? 0 : undefined,
+            gap: compact ? 3 : undefined,
+          }}
+        >
+          <label className="form-label" style={compact ? { fontSize: '0.72rem' } : undefined}>
+            Timezone
+          </label>
           <CustomSelect
             options={timezones.map((tz) => ({ value: tz, label: tz }))}
             value={value.timezone || ''}

@@ -22,7 +22,7 @@
 }
 
 .timeTrigger:hover:not(:disabled) {
-  border-color: rgba(26, 138, 138, 0.35);
+  border-color: rgba(var(--accent-primary-rgb), 0.35);
 }
 
 .timeTrigger:disabled {
@@ -90,12 +90,12 @@
 }
 
 .optionItem:hover {
-  background: rgba(15, 118, 118, 0.05);
+  background: rgba(var(--accent-primary-rgb), 0.05);
   color: var(--accent-primary);
 }
 
 .selectedItem {
-  background: rgba(15, 118, 118, 0.08);
+  background: rgba(var(--accent-primary-rgb), 0.08);
   color: var(--accent-primary);
   font-weight: 700;
 }

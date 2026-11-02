@@ -43,6 +43,7 @@ export default function AdminCategoriesPage() {
     parentId: '',
     active: true,
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const loadCategories = async () => {
     setLoading(true);
@@ -72,6 +73,35 @@ export default function AdminCategoriesPage() {
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleImageUpload = async (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setError('Please choose an image file (JPG, PNG, WebP, or GIF).');
+      return;
+    }
+    setUploadingImage(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const body = new FormData();
+      body.append('file', file);
+      const qs = editingCategory ? `?categoryId=${editingCategory.id}` : '';
+      const result = await apiFetch<{ url: string }>(`/api/admin/category-images${qs}`, {
+        method: 'POST',
+        body,
+      });
+      handleInputChange('imageUrl', result.url);
+      if (editingCategory) {
+        setMessage('Cover image saved. It will show on the landing page.');
+        await loadCategories();
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Image upload failed.');
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleEditClick = (category: Category) => {
@@ -115,6 +145,7 @@ export default function AdminCategoriesPage() {
 
     const payload = {
       ...formData,
+      imageUrl: formData.imageUrl.trim() || null,
       parentId: formData.parentId ? parseInt(formData.parentId) : null,
     };
 
@@ -162,9 +193,14 @@ export default function AdminCategoriesPage() {
     <div key={category.id} className={styles.treeNode} style={{ marginLeft: depth * 20 }}>
       <div className={`surface ${styles.nodeCard}`}>
         <div className={styles.nodeInfo}>
-          <span className={styles.nodeIcon}>
-            <i className={`fa-solid ${category.icon || 'fa-tag'}`} />
-          </span>
+          {category.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={category.imageUrl} alt="" className={styles.nodeThumb} />
+          ) : (
+            <span className={styles.nodeIcon}>
+              <i className={`fa-solid ${category.icon || 'fa-tag'}`} />
+            </span>
+          )}
           <div>
             <span className={styles.nodeName}>{category.name}</span>
             <span className={styles.nodeSlug}>/c/{category.slug}</span>
@@ -312,16 +348,59 @@ export default function AdminCategoriesPage() {
             </div>
           </div>
           <div className="form-group">
-            <label className="form-label" htmlFor="catImage">
-              Cover image URL
+            <label className="form-label" htmlFor="catImageFile">
+              Cover image
             </label>
-            <input
-              id="catImage"
-              type="text"
-              className="input-field"
-              value={formData.imageUrl}
-              onChange={(e) => handleInputChange('imageUrl', e.target.value)}
-            />
+            <div className={styles.imageUpload}>
+              {formData.imageUrl ? (
+                <div className={styles.imagePreview}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={formData.imageUrl} alt="Category cover preview" />
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline"
+                    onClick={() => handleInputChange('imageUrl', '')}
+                    disabled={uploadingImage || submitting}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <div className={styles.imagePlaceholder}>
+                  <i className="fa-solid fa-image" />
+                  <span>No image selected</span>
+                </div>
+              )}
+              <label className={styles.fileBtn}>
+                <input
+                  id="catImageFile"
+                  type="file"
+                  accept="image/*"
+                  disabled={uploadingImage || submitting}
+                  onChange={(e) => {
+                    void handleImageUpload(e.target.files?.[0] || null);
+                    e.target.value = '';
+                  }}
+                />
+                <i className={`fa-solid ${uploadingImage ? 'fa-circle-notch fa-spin' : 'fa-upload'}`} />
+                {uploadingImage ? 'Uploading…' : 'Upload from computer'}
+              </label>
+              <p className={styles.imageHint}>
+                JPG, PNG, WebP, or GIF. Image URL is optional when you upload a file.
+              </p>
+              <label className="form-label" htmlFor="catImage">
+                Image URL <span className={styles.optionalHint}>(optional)</span>
+              </label>
+              <input
+                id="catImage"
+                type="text"
+                className="input-field"
+                value={formData.imageUrl}
+                onChange={(e) => handleInputChange('imageUrl', e.target.value)}
+                placeholder="Filled automatically after upload, or paste a link"
+                disabled={uploadingImage || submitting}
+              />
+            </div>
           </div>
           <div className={styles.checkRow}>
             <input

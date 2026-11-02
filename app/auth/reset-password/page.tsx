@@ -78,7 +78,7 @@ function ResetPasswordForm() {
           <i className="fa-solid fa-key" />
         </div>
         <h2 className={shared.authTitle}>Reset password</h2>
-        <p className={shared.authSubtitle}>Choose a new password for your HourSlot account.</p>
+        <p className={shared.authSubtitle}>Choose a new password for your Duemet account.</p>
       </div>
 
       {error && (

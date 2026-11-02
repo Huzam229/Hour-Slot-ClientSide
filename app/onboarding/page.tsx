@@ -40,7 +40,7 @@ export default function OnboardingPage() {
         <p className={styles.welcomeSubtitle}>
           {isBusiness
             ? 'Your business registration is being reviewed. Once approved you appear on Explore; Tax ID and bank statement unlock a Verified badge:'
-            : 'You’re all set. Here’s how to get the most out of HourSlot:'}
+            : 'You’re all set. Here’s how to get the most out of Duemet:'}
         </p>
 
         <div className={styles.features}>

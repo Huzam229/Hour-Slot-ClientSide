@@ -38,7 +38,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(15, 118, 118, 0.08);
+  background: rgba(var(--accent-primary-rgb), 0.08);
   color: var(--accent-primary);
   font-size: 1.3rem;
 }
@@ -121,7 +121,7 @@
 }
 
 .serviceCard:hover {
-  border-color: rgba(26, 138, 138, 0.45);
+  border-color: rgba(var(--accent-primary-rgb), 0.45);
   box-shadow: var(--glow-shadow);
   transform: translateY(-2px);
 }
@@ -206,7 +206,7 @@
   border-radius: 6px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  background: rgba(15, 118, 118, 0.1);
+  background: rgba(var(--accent-primary-rgb), 0.1);
   color: var(--accent-primary);
 }
 
@@ -217,7 +217,7 @@
   border-radius: 6px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  background: rgba(90, 115, 124, 0.1);
+  background: rgba(107, 114, 128, 0.1);
   color: var(--text-muted);
 }
 

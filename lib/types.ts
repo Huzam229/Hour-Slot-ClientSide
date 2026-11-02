@@ -2,8 +2,7 @@ export type UserRole =
   | 'CUSTOMER'
   | 'BUSINESS_OWNER'
   | 'BUSINESS_STAFF'
-  | 'SUPER_ADMIN'
-  | 'ADMIN';
+  | 'SUPER_ADMIN';
 
 export type BusinessStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
 
@@ -53,6 +52,10 @@ export interface Business {
   listingMode?: string;
   serviceMode?: string;
   opsStatus?: string;
+  isOnline?: boolean;
+  /** Taking urgent jobs right now. */
+  availableNow?: boolean;
+  availableNowUntil?: string | null;
 }
 
 export interface Branch {
@@ -77,6 +80,11 @@ export interface Service {
   durationMinutes: number;
   bufferMinutes?: number;
   currency?: string;
+  /** AT_PROVIDER | CUSTOMER_LOCATION | HYBRID | BOTH | REMOTE */
+  serviceMode?: string;
+  allowsHomeService?: boolean;
+  arrivalWindowMinutes?: number;
+  urgentSurchargePercent?: number;
 }
 
 export interface AvailableSlot {

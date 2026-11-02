@@ -111,7 +111,9 @@ export default function BookingShell({
             specialistLabel={specialistLabel}
             customerPackageLabel={customerPackageLabel}
           />
-          {children}
+          <div key={currentStep} className="hs-rise-in">
+            {children}
+          </div>
         </div>
         <aside className={styles.aside}>
           <BookingSummary

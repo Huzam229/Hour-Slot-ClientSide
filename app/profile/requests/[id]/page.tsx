@@ -185,8 +185,22 @@ export default function RequestDetailPage() {
     );
   }
 
-  const { request, media, providers, quotes } = detail;
-  const canCancel = request.status && !['CANCELLED', 'COMPLETED', 'SCHEDULED'].includes(request.status);
+  const request = detail.request;
+  const media = detail.media ?? [];
+  const providers = detail.providers ?? [];
+  const quotes = detail.quotes ?? [];
+  if (!request) {
+    return (
+      <div className={styles.page}>
+        <EmptyState
+          icon="fa-solid fa-clipboard-list"
+          title="Request not found"
+          description={error || 'This request may have been removed.'}
+        />
+      </div>
+    );
+  }
+  const canCancel = request.status && !['CANCELLED', 'COMPLETED', 'SCHEDULED', 'ACCEPTED'].includes(request.status);
   const location = [request.areaName, request.city, request.region, request.countryCode].filter(Boolean).join(', ');
 
   return (

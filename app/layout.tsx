@@ -1,27 +1,39 @@
 import type { Metadata, Viewport } from 'next';
-import { Roboto } from 'next/font/google';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
+import '../styles/motion.css';
 import { AuthProvider } from '@/lib/auth-context';
 import { ToastProvider } from '@/components/Toast';
+import PwaRegister from '@/components/PwaRegister';
 
-const roboto = Roboto({
+const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
-  weight: ['300', '400', '500', '700', '900'],
-  style: ['normal', 'italic'],
+  weight: ['400', '500', '600', '700'],
   display: 'swap',
+  variable: '--font-sans',
 });
 
 export const metadata: Metadata = {
-  title: 'HourSlot — Smart appointment booking',
+  title: 'Duemet — Smart appointment booking',
   description:
-    'Discover nearby services, book the perfect slot, and manage your business schedule with HourSlot.',
+    'Discover nearby services, book the perfect slot, and manage your business schedule with Duemet.',
   appleWebApp: {
     capable: true,
-    title: 'HourSlot',
+    title: 'Duemet',
     statusBarStyle: 'default',
   },
   formatDetection: {
     telephone: false,
+  },
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.png', type: 'image/png', sizes: '32x32' },
+      { url: '/favicon-32.png', type: 'image/png', sizes: '32x32' },
+      { url: '/duemet-mark.png', type: 'image/png', sizes: 'any' },
+      { url: '/icons/icon-192.png', type: 'image/png', sizes: '192x192' },
+    ],
+    apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180' }],
   },
 };
 
@@ -30,7 +42,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: 'cover',
-  themeColor: '#f4f7fb',
+  themeColor: '#f9fafb',
 };
 
 export default function RootLayout({
@@ -39,14 +51,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={roboto.className} suppressHydrationWarning>
+    <html lang="en" className={jakarta.variable} suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;0,900;1,400;1,700&display=swap"
-          rel="stylesheet"
-        />
         <link
           rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
@@ -55,7 +61,8 @@ export default function RootLayout({
           referrerPolicy="no-referrer"
         />
       </head>
-      <body className={roboto.className} suppressHydrationWarning>
+      <body className={jakarta.className} suppressHydrationWarning>
+        <PwaRegister />
         <AuthProvider>
           <ToastProvider>
             {children}

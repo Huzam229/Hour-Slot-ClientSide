@@ -134,7 +134,7 @@ export default function PlanPage() {
               </div>
               {maxBranches < 999 ? (
                 <div className={styles.progressTrack}>
-                  <div className={styles.progressBar} style={{ width: `${branchPercent}%`, background: 'linear-gradient(90deg, #0f7676, #10b981)' }} />
+                  <div className={styles.progressBar} style={{ width: `${branchPercent}%`, background: 'linear-gradient(90deg, #2563eb, #10b981)' }} />
                 </div>
               ) : (
                 <div className={styles.unlimitedBar} />
@@ -150,7 +150,7 @@ export default function PlanPage() {
               </div>
               {maxStaff < 999 ? (
                 <div className={styles.progressTrack}>
-                  <div className={styles.progressBar} style={{ width: `${staffPercent}%`, background: 'linear-gradient(90deg, #0f7676, #06b6d4)' }} />
+                  <div className={styles.progressBar} style={{ width: `${staffPercent}%`, background: 'linear-gradient(90deg, #2563eb, #60a5fa)' }} />
                 </div>
               ) : (
                 <div className={styles.unlimitedBar} />
@@ -165,7 +165,7 @@ export default function PlanPage() {
                 </strong>
               </div>
               <div className={styles.progressTrack}>
-                <div className={styles.progressBar} style={{ width: '0%', background: 'linear-gradient(90deg, #0f7676, #6366f1)' }} />
+                <div className={styles.progressBar} style={{ width: '0%', background: 'linear-gradient(90deg, #2563eb, #3b82f6)' }} />
               </div>
             </div>
           </div>
@@ -263,7 +263,7 @@ export default function PlanPage() {
             <button type="button" className="btn btn-secondary" onClick={() => setSelectedPlan(null)}>
               Close
             </button>
-            <a href="mailto:support@hourslot.com?subject=Subscription Upgrade Request" className="btn btn-primary">
+            <a href="mailto:support@duemet.com?subject=Subscription Upgrade Request" className="btn btn-primary">
               <i className="fa-solid fa-envelope" /> Contact Sales
             </a>
           </div>
@@ -278,7 +278,7 @@ export default function PlanPage() {
             We are currently integrating Stripe payment gateways to support automated subscription checkout and monthly invoices.
           </p>
           <p>
-            If you need headroom immediately to add more branches or staff seats to your <strong>{selectedPlan?.name}</strong> upgrade, please contact our support team at <strong>support@hourslot.com</strong> to expedite your plan update manually.
+            If you need headroom immediately to add more branches or staff seats to your <strong>{selectedPlan?.name}</strong> upgrade, please contact our support team at <strong>support@duemet.com</strong> to expedite your plan update manually.
           </p>
         </div>
       </Modal>

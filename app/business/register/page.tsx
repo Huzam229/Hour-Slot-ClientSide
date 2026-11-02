@@ -129,7 +129,7 @@ export default function RegisterBusinessPage() {
             <strong><i className="fa-solid fa-store" /> Business / salon</strong>
             <span>Register a venue with branches, staff, and shared operations.</span>
           </div>
-          <Link href="/business/onboarding/individual" className={phaseStyles.choice}>
+          <Link href="/provider/onboarding" className={phaseStyles.choice}>
             <strong><i className="fa-solid fa-user" /> I&apos;m an individual professional</strong>
             <span>Create a personal provider listing for your own services.</span>
           </Link>

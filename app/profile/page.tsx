@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { apiFetch } from '@/lib/api';
+import AppAccessCard from '@/components/AppAccessCard';
 import PageHeader from '@/components/PageHeader';
 import FormField from '@/components/FormField';
 import Skeleton from '@/components/Skeleton';
@@ -26,7 +27,7 @@ interface NotificationPrefs {
 }
 
 export default function ProfilePage() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateSession } = useAuth();
   const router = useRouter();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [firstName, setFirstName] = useState('');
@@ -87,7 +88,6 @@ export default function ProfilePage() {
   }, [activeTab]);
 
   const handleLogout = () => {
-    document.cookie = 'hourslot_user_session=; path=/; max-age=0';
     logout();
     router.push('/profile/explore');
   };
@@ -119,13 +119,7 @@ export default function ProfilePage() {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      const sessionRaw = localStorage.getItem('hourslot_user_session');
-      if (sessionRaw) {
-        const session = JSON.parse(sessionRaw);
-        const next = { ...session, firstName, lastName };
-        localStorage.setItem('hourslot_user_session', JSON.stringify(next));
-        document.cookie = `hourslot_user_session=${encodeURIComponent(JSON.stringify(next))}; path=/; max-age=86400; SameSite=Lax`;
-      }
+      updateSession({ firstName, lastName });
     } catch (err: unknown) {
       const e = err as { message?: string };
       setError(e?.message || 'Could not update profile.');
@@ -197,6 +191,8 @@ export default function ProfilePage() {
           <i className="fa-solid fa-triangle-exclamation" /> {error}
         </div>
       )}
+
+      <AppAccessCard />
 
       <div className={styles.quickLinks}>
         <Link href="/profile/bookings" className={styles.quickLink}>

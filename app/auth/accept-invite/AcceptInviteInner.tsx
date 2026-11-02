@@ -86,7 +86,7 @@ export default function AcceptInviteInner() {
           <i className="fa-solid fa-envelope-open-text" />
         </div>
         <h2 className={shared.authTitle}>Accept staff invite</h2>
-        <p className={shared.authSubtitle}>Complete your profile to join your team on HourSlot.</p>
+        <p className={shared.authSubtitle}>Complete your profile to join your team on Duemet.</p>
       </div>
 
       {loading && (

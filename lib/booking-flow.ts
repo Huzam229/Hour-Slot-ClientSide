@@ -233,7 +233,7 @@ export function buildWeekDays(weekStart: Date): { dayNum: number; dateStr: strin
   return days;
 }
 
-const CONFIRMATION_STORAGE_KEY = 'hourslot_booking_confirmation';
+const CONFIRMATION_STORAGE_KEY = 'duemet_booking_confirmation';
 
 export interface BookingConfirmationSnapshot {
   bookingId: number;
@@ -266,7 +266,7 @@ export function loadConfirmationSnapshot(bookingId: number): BookingConfirmation
   }
 }
 
-const DRAFT_STORAGE_PREFIX = 'hourslot_booking_draft_';
+const DRAFT_STORAGE_PREFIX = 'duemet_booking_draft_';
 
 export interface BookingDraft {
   paymentMethod?: 'ONLINE' | 'VENUE' | 'PACKAGE';

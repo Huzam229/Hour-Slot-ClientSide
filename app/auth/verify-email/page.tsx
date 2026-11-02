@@ -46,7 +46,7 @@ function VerifyEmailForm() {
             <i className="fa-solid fa-circle-check" />
           </div>
           <h2 className={shared.successTitle}>Email verified</h2>
-          <p className={shared.successMessage}>Your email address is confirmed. You can continue using HourSlot.</p>
+          <p className={shared.successMessage}>Your email address is confirmed. You can continue using Duemet.</p>
           <Link href="/profile/explore" className={shared.submitBtn}>
             Explore businesses
           </Link>

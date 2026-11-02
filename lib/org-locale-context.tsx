@@ -44,21 +44,40 @@ export function OrgLocaleProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     try {
-      const data = await apiFetch<OrgLocale>('/api/business/organization');
-      setLocale({
-        id: data.id,
-        defaultCurrency: data.defaultCurrency || 'USD',
-        countryCode: data.countryCode,
-        region: data.region,
-        city: data.city,
-        timezone: data.timezone,
-      });
+      if (user?.listingMode === 'INDIVIDUAL') {
+        const data = await apiFetch<{
+          defaultCurrency?: string;
+          countryCode?: string;
+          region?: string;
+          city?: string;
+          timezone?: string;
+          organizationId?: number;
+        }>('/api/provider/workspace');
+        setLocale({
+          id: data.organizationId,
+          defaultCurrency: data.defaultCurrency || 'PKR',
+          countryCode: data.countryCode,
+          region: data.region,
+          city: data.city,
+          timezone: data.timezone,
+        });
+      } else {
+        const data = await apiFetch<OrgLocale>('/api/business/organization');
+        setLocale({
+          id: data.id,
+          defaultCurrency: data.defaultCurrency || 'USD',
+          countryCode: data.countryCode,
+          region: data.region,
+          city: data.city,
+          timezone: data.timezone,
+        });
+      }
     } catch {
       setLocale(DEFAULT_LOCALE);
     } finally {
       setLoaded(true);
     }
-  }, [user?.role]);
+  }, [user?.role, user?.listingMode]);
 
   useEffect(() => {
     void refresh();

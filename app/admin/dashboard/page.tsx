@@ -55,8 +55,6 @@ export default function AdminDashboardPage() {
   const [trend, setTrend] = useState<RevenuePoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [seeding, setSeeding] = useState(false);
-  const [seedSuccess, setSeedSuccess] = useState<string | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -80,21 +78,6 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     loadData();
   }, []);
-
-  const handleSeedDatabase = async () => {
-    setSeeding(true);
-    setSeedSuccess(null);
-    setError(null);
-    try {
-      const res: any = await apiFetch('/api/admin/seed', { method: 'POST' });
-      setSeedSuccess(res?.message || 'Database seeded successfully!');
-      await loadData();
-    } catch (err: any) {
-      setError(err?.message || 'Failed to seed mock data. Database may be already seeded.');
-    } finally {
-      setSeeding(false);
-    }
-  };
 
   const getSvgCoordinates = () => {
     if (trend.length === 0) return { path: '', area: '', points: [] as { x: number; y: number; value: number; label: string }[] };
@@ -127,8 +110,6 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const isDatabaseEmpty = stats ? stats.totalUsers <= 1 : true;
-
   if (loading && !stats) {
     return (
       <div className={styles.dashboardWrapper}>
@@ -146,26 +127,12 @@ export default function AdminDashboardPage() {
       <PageHeader
         title="Admin dashboard"
         subtitle="Platform health, commission trends, and recent registrations."
-        actions={
-          isDatabaseEmpty ? (
-            <button type="button" className="btn btn-secondary" onClick={handleSeedDatabase} disabled={seeding}>
-              {seeding ? 'Seeding...' : 'Seed database'}
-            </button>
-          ) : undefined
-        }
       />
 
       {error && (
         <div className="error-alert">
           <i className="fa-solid fa-triangle-exclamation" />
           <span>{error}</span>
-        </div>
-      )}
-
-      {seedSuccess && (
-        <div className="success-alert">
-          <i className="fa-solid fa-circle-check" />
-          <span>{seedSuccess}</span>
         </div>
       )}
 
@@ -185,23 +152,6 @@ export default function AdminDashboardPage() {
           <Link href="/admin/businesses?status=PENDING" className="btn btn-primary btn-sm">
             Go verify <i className="fa-solid fa-arrow-right" />
           </Link>
-        </div>
-      )}
-
-      {isDatabaseEmpty && (
-        <div className={`surface ${styles.seederCard}`}>
-          <div className={styles.seederText}>
-            <span className={styles.seederTitle}>
-              <i className="fa-solid fa-database" /> Demo database seeder
-            </span>
-            <p className={styles.seederDesc}>
-              The database appears empty. Seed mock users, businesses, categories, bookings, and audit records to explore
-              the console.
-            </p>
-          </div>
-          <button type="button" className="btn btn-secondary" onClick={handleSeedDatabase} disabled={seeding}>
-            {seeding ? 'Seeding...' : 'Seed database records'}
-          </button>
         </div>
       )}
 

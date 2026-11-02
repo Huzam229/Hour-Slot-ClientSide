@@ -114,10 +114,10 @@ export default function CustomDatePicker({
         aria-expanded={isOpen}
       >
         <span className={styles.triggerLabel}>
-          <i className="fa-regular fa-calendar className={styles.calendarIcon}" />
+          <i className={`fa-regular fa-calendar ${styles.calendarIcon}`} />
           {value ? formattedValue : <span className={styles.placeholder}>{placeholder}</span>}
         </span>
-        <i className="fa-solid fa-chevron-down className={styles.chevron}" />
+        <i className={`fa-solid fa-chevron-down ${styles.chevron}`} />
       </button>
 
       {isOpen && (

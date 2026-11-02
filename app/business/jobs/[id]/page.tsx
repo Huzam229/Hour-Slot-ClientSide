@@ -11,6 +11,7 @@ import StatusBadge from '@/components/StatusBadge';
 import FormField from '@/components/FormField';
 import { formatMoney } from '@/lib/money';
 import styles from '@/app/phase1.module.css';
+import JobExtras, { type JobExtrasDetail } from '@/components/jobs/JobExtras';
 
 type Job = {
   id: number;
@@ -46,7 +47,7 @@ type MediaItem = {
   mimeType?: string;
 };
 
-type JobDetail = {
+type JobDetail = Omit<JobExtrasDetail, 'job'> & {
   job?: Job;
   history?: HistoryItem[];
   notes?: NoteItem[];
@@ -121,8 +122,6 @@ export default function ProviderJobDetailPage() {
       setDetail(data);
       if (data.job?.finalAmount != null) {
         setFinalAmount(String(data.job.finalAmount));
-      } else if (data.job?.estimatedAmount != null) {
-        setFinalAmount(String(data.job.estimatedAmount));
       }
     } catch (err: unknown) {
       setError((err as { message?: string })?.message || 'Could not load this job.');
@@ -296,6 +295,7 @@ export default function ProviderJobDetailPage() {
               type="number"
               min="0"
               step="0.01"
+              placeholder={`Labour + materials: ${(job.estimatedAmount ?? 0) + (detail.materialsTotal ?? 0)}`}
               value={finalAmount}
               onChange={(e) => setFinalAmount(e.target.value)}
             />
@@ -318,6 +318,15 @@ export default function ProviderJobDetailPage() {
           </div>
         )}
       </section>
+
+      <JobExtras
+        detail={detail}
+        role="provider"
+        onChanged={async (msg) => {
+          setMessage(msg);
+          await load();
+        }}
+      />
 
       <section className={styles.section}>
         <div className={styles.sectionHead}>

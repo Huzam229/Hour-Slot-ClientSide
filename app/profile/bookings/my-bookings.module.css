@@ -36,18 +36,27 @@
 }
 
 .bookingCard {
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 20px;
   padding: 0;
   overflow: hidden;
   box-shadow: var(--card-shadow);
-  transition: var(--transition-fast);
+  transition: border-color 0.2s ease, box-shadow 0.22s ease, transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: hsRiseIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.bookingsList .bookingCard:nth-child(1) { animation-delay: 0.03s; }
+.bookingsList .bookingCard:nth-child(2) { animation-delay: 0.08s; }
+.bookingsList .bookingCard:nth-child(3) { animation-delay: 0.13s; }
+.bookingsList .bookingCard:nth-child(4) { animation-delay: 0.18s; }
+.bookingsList .bookingCard:nth-child(5) { animation-delay: 0.23s; }
+.bookingsList .bookingCard:nth-child(n + 6) { animation-delay: 0.28s; }
+
 .bookingCard:hover {
-  border-color: rgba(26, 138, 138, 0.28);
-  box-shadow: 0 12px 32px rgba(26, 138, 138, 0.08);
+  border-color: rgba(var(--accent-primary-rgb), 0.28);
+  box-shadow: 0 12px 32px rgba(var(--accent-primary-rgb), 0.08);
+  transform: translateY(-2px);
 }
 
 .dateHero {
@@ -56,7 +65,7 @@
   gap: 16px;
   align-items: center;
   padding: 20px;
-  background: linear-gradient(135deg, rgba(26, 138, 138, 0.05), rgba(91, 184, 140, 0.06));
+  background: linear-gradient(135deg, rgba(var(--accent-primary-rgb), 0.05), rgba(59, 130, 246, 0.06));
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -65,7 +74,7 @@
   text-align: center;
   padding: 10px 8px;
   border-radius: 14px;
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
 }
 
@@ -172,8 +181,8 @@
 .reviewedBadge {
   font-size: 0.8rem;
   color: var(--accent-primary);
-  background: rgba(26, 138, 138, 0.08);
-  border: 1px solid rgba(26, 138, 138, 0.15);
+  background: rgba(var(--accent-primary-rgb), 0.08);
+  border: 1px solid rgba(var(--accent-primary-rgb), 0.15);
   padding: 6px 12px;
   border-radius: 8px;
   font-weight: 600;

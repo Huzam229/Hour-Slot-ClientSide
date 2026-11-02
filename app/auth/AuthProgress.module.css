@@ -1,0 +1,97 @@
+.wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 180px;
+}
+
+.meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.stepIndex {
+  font-size: 1.01rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+  font-variant-numeric: tabular-nums;
+}
+
+.stepOf {
+  color: #9ca3af;
+  font-weight: 400;
+  font-size: 0.86rem;
+}
+
+.stepName {
+  font-size: 0.86rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--accent-primary);
+}
+
+.rail {
+  position: relative;
+  height: 18px;
+  display: flex;
+  align-items: center;
+}
+
+.railTrack {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.08);
+}
+
+.railFill {
+  position: absolute;
+  left: 0;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-primary) 50%, #3b82f6);
+  box-shadow: 0 0 12px rgba(var(--accent-primary-rgb), 0.35);
+  transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dots {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 2px solid rgba(17, 24, 39, 0.14);
+  display: grid;
+  place-items: center;
+  font-size: 0.45rem;
+  color: #fff;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dotDone {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.dotOn {
+  width: 16px;
+  height: 16px;
+  border-color: var(--accent-primary);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 4px rgba(var(--accent-primary-rgb), 0.16);
+  transform: scale(1.05);
+}

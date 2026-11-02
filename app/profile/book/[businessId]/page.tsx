@@ -32,7 +32,7 @@ import BookingShell from '@/components/booking/BookingShell';
 import ServiceStep from '@/components/booking/ServiceStep';
 import DetailsStep from '@/components/booking/DetailsStep';
 import ScheduleStep from '@/components/booking/ScheduleStep';
-import ConfirmStep, { type PaymentChoice } from '@/components/booking/ConfirmStep';
+import ConfirmStep, { type PaymentChoice, type RepeatFrequency } from '@/components/booking/ConfirmStep';
 import Skeleton from '@/components/Skeleton';
 import EmptyState from '@/components/EmptyState';
 
@@ -111,6 +111,24 @@ function BookWizardInner() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [quotedSlot, setQuotedSlot] = useState<AvailableSlot | null>(null);
   const [packageLabel, setPackageLabel] = useState<string | null>(null);
+  const [visitAddressId, setVisitAddressId] = useState<number | null>(null);
+  const [urgent, setUrgent] = useState(false);
+  const [repeatFrequency, setRepeatFrequency] = useState<RepeatFrequency>('NONE');
+  const [repeatCount, setRepeatCount] = useState(4);
+  const [promoCode, setPromoCode] = useState<string | null>(null);
+  const [terms, setTerms] = useState<{
+    freeCancelHours: number;
+    lateCancelFeePercent: number;
+    noShowFeePercent: number;
+    policyText?: string | null;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!businessId) return;
+    apiFetch<typeof terms>(`/api/public/businesses/${businessId}/booking-terms`, { skipAuth: true })
+      .then(setTerms)
+      .catch(() => setTerms(null));
+  }, [businessId]);
 
   const profileLoaded = useRef(false);
   const pendingUrlSync = useRef(false);
@@ -262,6 +280,12 @@ function BookWizardInner() {
     .filter(Boolean);
   const thumb = gallery?.[0] || profile?.business.logoUrl || null;
 
+  const homeVisitSupported =
+    !!service &&
+    (!!service.allowsHomeService ||
+      ['CUSTOMER_LOCATION', 'HYBRID', 'BOTH'].includes((service.serviceMode || '').toUpperCase()));
+  const homeVisitRequired = (service?.serviceMode || '').toUpperCase() === 'CUSTOMER_LOCATION';
+
   const quotedPrice = quotedSlot?.price ?? service?.price ?? 0;
   const returnUrl = buildBookingHref(businessId as string, { ...flow, step: 'confirm' });
   const specialistLabel = isStaffChosen(flow.staffId)
@@ -321,6 +345,39 @@ function BookWizardInner() {
 
     const bookingTime = `${flow.date}T${flow.slot}:00`;
 
+    if (repeatFrequency !== 'NONE' && paymentMethod === 'VENUE') {
+      try {
+        const result = await apiFetch<{ booked: unknown[]; skipped: { bookingTime: string; reason: string }[] }>(
+          '/api/customer/bookings/recurring',
+          {
+            method: 'POST',
+            body: JSON.stringify({
+              branchId: Number.parseInt(flow.branchId, 10),
+              serviceId: Number.parseInt(flow.serviceId, 10),
+              staffId: dedicatedStaffId(flow.staffId)
+                ? Number.parseInt(flow.staffId, 10)
+                : quotedSlot?.availableStaff?.[0]?.id ?? null,
+              bookingTime,
+              frequency: repeatFrequency,
+              occurrences: repeatCount,
+              clientNotes: clientNotes || null,
+              addressId: homeVisitSupported ? visitAddressId : null,
+            }),
+          }
+        );
+        clearBookingDraft(businessId as string);
+        const skipped = result.skipped.length;
+        router.push(
+          `/profile/bookings?series=${result.booked.length}` + (skipped ? `&skipped=${skipped}` : '')
+        );
+      } catch (err: unknown) {
+        setError((err as { message?: string })?.message || 'Could not book the repeat appointments.');
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
     try {
       const created = await apiFetch<{ id: number }>('/api/bookings', {
         method: 'POST',
@@ -333,6 +390,10 @@ function BookWizardInner() {
           bookingTime,
           clientNotes: clientNotes || null,
           customerPackageId: paymentMethod === 'PACKAGE' ? selectedPackageId : null,
+          paymentMethod,
+          addressId: homeVisitSupported ? visitAddressId : null,
+          urgent: urgent && !!profile.business.availableNow,
+          promoCode: paymentMethod === 'PACKAGE' ? null : promoCode,
         }),
       });
 
@@ -489,6 +550,18 @@ function BookWizardInner() {
           currency={quotedSlot?.currency || service?.currency || profile.business.currency}
           onDateChange={handleDateChange}
           onSlotChange={handleSlotChange}
+          onJoinWaitlist={async () => {
+            if (!isAuthenticated) throw { message: 'Sign in first, then tap "Notify me" again.' };
+            const res = await apiFetch<{ message: string }>('/api/customer/waitlist', {
+              method: 'POST',
+              body: JSON.stringify({
+                branchId: Number.parseInt(flow.branchId, 10),
+                serviceId: Number.parseInt(flow.serviceId, 10),
+                date: flow.date,
+              }),
+            });
+            return res.message;
+          }}
         />
       )}
 
@@ -507,6 +580,32 @@ function BookWizardInner() {
           onNotesChange={setClientNotes}
           onTermsChange={setTermsAccepted}
           onConfirm={handleConfirm}
+          visit={{
+            supported: homeVisitSupported,
+            required: homeVisitRequired,
+            arrivalWindowMinutes: service?.arrivalWindowMinutes ?? 0,
+            urgentAvailable: !!profile.business.availableNow,
+            urgentSurchargePercent: Number(service?.urgentSurchargePercent ?? 0),
+            addressId: visitAddressId,
+            urgent,
+            onAddressChange: setVisitAddressId,
+            onUrgentChange: setUrgent,
+          }}
+          terms={terms}
+          promoBusinessId={repeatFrequency === 'NONE' ? String(businessId) : undefined}
+          onPromoChange={setPromoCode}
+          repeat={
+            urgent
+              ? undefined
+              : {
+                  frequency: repeatFrequency,
+                  occurrences: repeatCount,
+                  onChange: (f, n) => {
+                    setRepeatFrequency(f);
+                    setRepeatCount(n);
+                  },
+                }
+          }
         />
       )}
     </BookingShell>

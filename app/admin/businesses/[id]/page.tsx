@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, use } from 'react';
 import Link from 'next/link';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, openAuthedFile } from '@/lib/api';
 import PageHeader from '@/components/PageHeader';
 import Skeleton from '@/components/Skeleton';
 import StatusBadge from '@/components/StatusBadge';
@@ -48,6 +48,8 @@ interface Business {
   category?: string;
   status: string;
   verified: boolean;
+  publishStatus?: string;
+  listingMode?: string;
   commissionRate: number;
   rating: number;
   logoUrl?: string;
@@ -95,12 +97,12 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [commissionRateInput, setCommissionRateInput] = useState('10');
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
-  const [commissionLoading, setCommissionLoading] = useState(false);
   const [showSuspendConfirm, setShowSuspendConfirm] = useState(false);
+  const [docReviewTarget, setDocReviewTarget] = useState<{ id: number; approve: boolean; label: string } | null>(null);
+  const [docReviewNotes, setDocReviewNotes] = useState('');
 
   const loadDetails = async () => {
     setLoading(true);
@@ -108,7 +110,6 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
     try {
       const data = await apiFetch<BusinessDetailResponse>(`/api/admin/businesses/${businessId}`);
       setDetail(data);
-      setCommissionRateInput(data.business.commissionRate.toString());
     } catch (err: any) {
       setError(err.message || 'Could not load business details.');
     } finally {
@@ -152,18 +153,38 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
     }
   };
 
-  const reviewDocument = async (documentId: number, approve: boolean) => {
+  const openDocReview = (documentId: number, approve: boolean, label: string) => {
+    setDocReviewTarget({ id: documentId, approve, label });
+    setDocReviewNotes(approve ? 'Looks valid' : '');
+    setError(null);
+  };
+
+  const submitDocReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!docReviewTarget) return;
+    if (!docReviewTarget.approve && !docReviewNotes.trim()) {
+      setError('Add a short note so the owner knows what to fix.');
+      return;
+    }
     setError(null);
     setMessage(null);
+    setActionLoading(true);
     try {
-      await apiFetch(`/api/admin/businesses/${businessId}/verification-documents/${documentId}/review`, {
+      await apiFetch(`/api/admin/businesses/${businessId}/verification-documents/${docReviewTarget.id}/review`, {
         method: 'PUT',
-        body: JSON.stringify({ approve, notes: approve ? 'Looks valid' : 'Please re-upload a clearer document' }),
+        body: JSON.stringify({
+          approve: docReviewTarget.approve,
+          notes: docReviewNotes.trim() || (docReviewTarget.approve ? 'Looks valid' : undefined),
+        }),
       });
-      setMessage(approve ? 'Document approved.' : 'Document rejected.');
+      setMessage(docReviewTarget.approve ? 'Document approved.' : 'Document rejected.');
+      setDocReviewTarget(null);
+      setDocReviewNotes('');
       await loadDetails();
     } catch (err: any) {
       setError(err.message || 'Document review failed.');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -205,32 +226,6 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
       setError(err.message || 'Failed to suspend business.');
     } finally {
       setActionLoading(false);
-    }
-  };
-
-  const handleUpdateCommission = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const rate = parseFloat(commissionRateInput);
-    if (isNaN(rate) || rate < 0 || rate > 100) {
-      setError('Please enter a valid commission rate percentage (0 - 100).');
-      return;
-    }
-    setError(null);
-    setMessage(null);
-    setCommissionLoading(true);
-    try {
-      await apiFetch(`/api/admin/businesses/${businessId}/commission?rate=${rate}`, { method: 'PUT' });
-      setMessage(`Commission rate successfully updated to ${rate}%.`);
-      if (detail) {
-        setDetail({
-          ...detail,
-          business: { ...detail.business, commissionRate: rate },
-        });
-      }
-    } catch (err: any) {
-      setError(err.message || 'Failed to update commission rate.');
-    } finally {
-      setCommissionLoading(false);
     }
   };
 
@@ -318,7 +313,13 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
             <div className={styles.headerCategory}>{business.category || 'Service industry'}</div>
           </div>
         </div>
-        <StatusBadge status={business.status} />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+          <StatusBadge status={business.status} />
+          <span className={styles.itemSub}>
+            Publish: {business.publishStatus || 'DRAFT'}
+            {business.verified ? ' · Verified badge' : ''}
+          </span>
+        </div>
       </div>
 
       <div className={`surface ${styles.urlCard}`}>
@@ -366,8 +367,20 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                 </span>
               </div>
               <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>Commission</span>
-                <span className={styles.infoValue}>{business.commissionRate}%</span>
+                <span className={styles.infoLabel}>Listing type</span>
+                <span className={styles.infoValue}>
+                  {business.listingMode === 'INDIVIDUAL' ? 'Individual professional' : 'Business'}
+                </span>
+              </div>
+              <div className={styles.infoRow}>
+                <span className={styles.infoLabel}>Marketplace</span>
+                <span className={styles.infoValue}>
+                  {business.status === 'APPROVED' && (business.publishStatus || '').toUpperCase() === 'PUBLISHED'
+                    ? 'Live'
+                    : business.status === 'APPROVED'
+                      ? 'Approved — not published yet'
+                      : 'Hidden'}
+                </span>
               </div>
             </div>
             <p className={styles.description}>{business.description || 'No description entered.'}</p>
@@ -403,13 +416,18 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
             <h3 className={styles.sectionTitle}>Verification documents</h3>
             <p className={styles.description}>
               Tier 1 (listing): {detail.verificationReadiness?.tier1ApprovedCount ?? 0}/
-              {detail.verificationReadiness?.tier1RequiredCount ?? 3} approved
+              {detail.verificationReadiness?.tier1RequiredCount ?? (business.listingMode === 'INDIVIDUAL' ? 1 : 3)} approved
               {detail.verificationReadiness?.readyForListing ? ' — ready to approve listing' : ''}
+              .{' '}
+              {business.listingMode === 'INDIVIDUAL'
+                ? 'Individuals need an approved government ID.'
+                : 'Businesses need Owner ID, Trade license, and Address proof.'}
             </p>
             <p className={styles.description}>
               Tier 2 (badge): {detail.verificationReadiness?.tier2ApprovedCount ?? 0}/
               {detail.verificationReadiness?.tier2RequiredCount ?? 2} approved
               {detail.verificationReadiness?.readyForVerifiedBadge ? ' — ready for verified badge' : ''}
+              . Tax ID and bank statement (amounts may be redacted).
             </p>
             {(detail.verificationDocuments || []).length === 0 ? (
               <p className={styles.description}>No documents uploaded yet.</p>
@@ -423,19 +441,24 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                     </span>
                     <StatusBadge status={doc.status} />
                     {doc.url && (
-                      <a href={doc.url} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline">
+                      <button type="button" className="btn btn-sm btn-outline" onClick={() => openAuthedFile(doc.url!).catch(() => {})}>
                         View
-                      </a>
+                      </button>
                     )}
                     {doc.status === 'SUBMITTED' && (
                       <>
-                        <button type="button" className="btn btn-sm btn-primary" onClick={() => reviewDocument(doc.id, true)}>
+                        <button type="button" className="btn btn-sm btn-primary" onClick={() => openDocReview(doc.id, true, doc.label)}>
                           Approve doc
                         </button>
-                        <button type="button" className="btn btn-sm btn-danger" onClick={() => reviewDocument(doc.id, false)}>
+                        <button type="button" className="btn btn-sm btn-danger" onClick={() => openDocReview(doc.id, false, doc.label)}>
                           Reject doc
                         </button>
                       </>
+                    )}
+                    {doc.reviewNotes && (
+                      <span className={styles.itemSub} style={{ width: '100%' }}>
+                        Note: {doc.reviewNotes}
+                      </span>
                     )}
                   </div>
                 ))}
@@ -445,6 +468,9 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
 
           <div className="surface">
             <h3 className={styles.sectionTitle}>Listing & verified badge</h3>
+            <p className={styles.description}>
+              Approval lets the owner publish. The verified badge is a separate trust decision after Tier 2 docs.
+            </p>
             <div className={styles.actionBtns}>
               {business.status === 'PENDING' && (
                 <>
@@ -453,18 +479,13 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                     className="btn btn-secondary"
                     onClick={handleApproveListing}
                     disabled={actionLoading || !detail.verificationReadiness?.readyForListing}
-                    title="Requires Tier 1 documents approved (Owner ID, Trade license, Address proof)"
+                    title={
+                      business.listingMode === 'INDIVIDUAL'
+                        ? 'Requires an approved government ID'
+                        : 'Requires Tier 1 documents approved (Owner ID, Trade license, Address proof)'
+                    }
                   >
                     Approve listing
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={handleApprove}
-                    disabled={actionLoading || !detail.verificationReadiness?.readyForVerifiedBadge}
-                    title="Requires Tier 2 documents approved (Tax ID, Bank statement)"
-                  >
-                    Grant verified badge
                   </button>
                   <button
                     type="button"
@@ -511,27 +532,6 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
                 </button>
               )}
             </div>
-
-            <form onSubmit={handleUpdateCommission} className={styles.commissionForm}>
-              <label className="form-label" htmlFor="commissionRate">
-              Commission percentage
-            </label>
-              <div className={styles.commissionRow}>
-                <input
-                  id="commissionRate"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.5"
-                  className="input-field"
-                  value={commissionRateInput}
-                  onChange={(e) => setCommissionRateInput(e.target.value)}
-                />
-                <button type="submit" className="btn btn-outline btn-sm" disabled={commissionLoading}>
-                  {commissionLoading ? 'Updating...' : 'Set rate'}
-                </button>
-              </div>
-            </form>
           </div>
         </div>
 
@@ -637,10 +637,66 @@ export default function BusinessDetailPage({ params }: { params: Promise<{ id: s
         </form>
       </Modal>
 
+      <Modal
+        open={!!docReviewTarget}
+        title={docReviewTarget?.approve ? 'Approve document' : 'Reject document'}
+        onClose={() => {
+          setDocReviewTarget(null);
+          setDocReviewNotes('');
+        }}
+        footer={
+          <>
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={() => {
+                setDocReviewTarget(null);
+                setDocReviewNotes('');
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              form="doc-review-form"
+              className={`btn ${docReviewTarget?.approve ? 'btn-primary' : 'btn-danger'}`}
+              disabled={actionLoading}
+            >
+              {docReviewTarget?.approve ? 'Approve' : 'Reject'}
+            </button>
+          </>
+        }
+      >
+        <form id="doc-review-form" onSubmit={submitDocReview}>
+          <p className={styles.modalHint}>
+            {docReviewTarget?.approve
+              ? `Confirm ${docReviewTarget.label} looks valid. Optional note is saved for the audit trail.`
+              : `Explain what is wrong with ${docReviewTarget?.label || 'this document'}. The owner sees this note.`}
+          </p>
+          <div className="form-group">
+            <label className="form-label" htmlFor="docReviewNotes">
+              {docReviewTarget?.approve ? 'Note (optional)' : 'Rejection note'}
+            </label>
+            <textarea
+              id="docReviewNotes"
+              className={`input-field ${styles.textarea}`}
+              placeholder={
+                docReviewTarget?.approve
+                  ? 'Looks valid'
+                  : 'e.g. Blurry ID photo — please re-upload a clearer scan'
+              }
+              value={docReviewNotes}
+              onChange={(e) => setDocReviewNotes(e.target.value)}
+              required={!docReviewTarget?.approve}
+            />
+          </div>
+        </form>
+      </Modal>
+
       <ConfirmDialog
         open={showSuspendConfirm}
         title="Suspend business"
-        message={`Suspend "${business.name}"? This stops all service bookings.`}
+        message={`Suspend "${business.name}"? This hides the listing and stops bookings.`}
         confirmLabel="Suspend"
         danger
         loading={actionLoading}

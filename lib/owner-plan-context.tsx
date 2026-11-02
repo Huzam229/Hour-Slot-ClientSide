@@ -28,15 +28,16 @@ export function OwnerPlanProvider({ children }: { children: React.ReactNode }) {
       setLoaded(true);
       return;
     }
+    const endpoint = user?.listingMode === 'INDIVIDUAL' ? '/api/provider/plan' : '/api/business/plan';
     try {
-      const data = await apiFetch<OwnerPlan>('/api/business/plan');
+      const data = await apiFetch<OwnerPlan>(endpoint);
       setPlan(data);
     } catch {
       setPlan(null);
     } finally {
       setLoaded(true);
     }
-  }, [user?.role]);
+  }, [user?.role, user?.listingMode]);
 
   useEffect(() => {
     void refresh();

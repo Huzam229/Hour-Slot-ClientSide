@@ -1,65 +1,21 @@
 /**
- * Typed API fetch wrapper — attaches Bearer token and refreshes on 401.
+ * Typed API fetch wrapper — session cookies are sent automatically; refreshes on 401.
  */
 
 import type { ApiError } from './types';
 import { currentReturnUrl, loginHref } from './auth-redirect';
-
-const STORAGE_KEY = 'hourslot_user_session';
-
-function getSession(): Record<string, unknown> | null {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
-  } catch {
-    // ignore
-  }
-  return null;
-}
-
-function getToken(): string | null {
-  const session = getSession();
-  return (session?.token as string) ?? null;
-}
-
-function getRefreshToken(): string | null {
-  const session = getSession();
-  return (session?.refreshToken as string) ?? null;
-}
-
-function persistSession(session: Record<string, unknown>) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-  document.cookie = `${STORAGE_KEY}=${encodeURIComponent(JSON.stringify(session))}; path=/; max-age=86400; SameSite=Lax`;
-}
-
-function clearSession() {
-  localStorage.removeItem(STORAGE_KEY);
-  document.cookie = `${STORAGE_KEY}=; path=/; max-age=0`;
-}
+import { clearSession, readSession } from './session-store';
 
 let refreshPromise: Promise<boolean> | null = null;
 
+/** The refresh token travels in an httpOnly cookie, so the body is empty. */
 async function tryRefreshToken(): Promise<boolean> {
   if (refreshPromise) return refreshPromise;
 
   refreshPromise = (async () => {
-    const refreshToken = getRefreshToken();
-    if (!refreshToken) return false;
     try {
-      const res = await fetch('/api/auth/refresh', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
-      });
-      if (!res.ok) return false;
-      const data = await res.json();
-      const session = getSession() || {};
-      persistSession({
-        ...session,
-        token: data.accessToken || data.token,
-        refreshToken: data.refreshToken || refreshToken,
-      });
-      return true;
+      const res = await fetch('/api/auth/refresh', { method: 'POST' });
+      return res.ok;
     } catch {
       return false;
     } finally {
@@ -90,14 +46,7 @@ export async function apiFetch<T = unknown>(
     headers['Content-Type'] = 'application/json';
   }
 
-  if (!skipAuth) {
-    const token = getToken();
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-  }
-
-  const hadSession = !skipAuth && (!!getToken() || !!getRefreshToken());
+  const hadSession = !skipAuth && !!readSession();
 
   const res = await fetch(path, { headers, ...rest });
 
@@ -125,4 +74,25 @@ export async function apiFetch<T = unknown>(
 
   const text = await res.text();
   return text ? (JSON.parse(text) as T) : (null as T);
+}
+
+/** Open a private, auth-protected file (e.g. a verification document) in a new tab. */
+export async function openAuthedFile(path: string, _retried = false): Promise<void> {
+  const win = window.open('', '_blank');
+  const res = await fetch(path);
+  if (res.status === 401 && !_retried && (await tryRefreshToken())) {
+    win?.close();
+    return openAuthedFile(path, true);
+  }
+  if (!res.ok) {
+    win?.close();
+    throw { message: 'Could not open the file.' } as ApiError;
+  }
+  const url = URL.createObjectURL(await res.blob());
+  if (win) {
+    win.location.href = url;
+  } else {
+    window.location.href = url;
+  }
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }

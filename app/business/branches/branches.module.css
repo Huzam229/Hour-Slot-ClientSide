@@ -85,7 +85,7 @@
 .branchCard:hover {
   background: var(--bg-secondary);
   border-color: var(--accent-primary);
-  box-shadow: 0 6px 18px rgba(15, 118, 118, 0.14);
+  box-shadow: 0 6px 18px rgba(var(--accent-primary-rgb), 0.14);
 }
 
 .cardHeader {
@@ -115,7 +115,7 @@
   border-radius: 6px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  background: rgba(15, 118, 118, 0.1);
+  background: rgba(var(--accent-primary-rgb), 0.1);
   color: var(--accent-primary);
 }
 

@@ -3,9 +3,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import { parseSlots, type AvailableSlot } from '@/lib/slots';
-import { buildWeekDays, dedicatedStaffId, formatFriendlyTime, isAnyStaff, startOfWeekMonday, toLocalDateStr } from '@/lib/booking-flow';
+import {
+  buildWeekDays,
+  dedicatedStaffId,
+  formatFriendlyTime,
+  isAnyStaff,
+  startOfWeekMonday,
+  toLocalDateStr,
+} from '@/lib/booking-flow';
 import { formatMoney } from '@/lib/money';
 import Skeleton from '@/components/Skeleton';
+import CustomDatePicker from '@/components/CustomDatePicker';
 import styles from './booking.module.css';
 
 interface ScheduleStepProps {
@@ -19,6 +27,8 @@ interface ScheduleStepProps {
   onDateChange: (date: string) => void;
   onSlotChange: (slot: string, quoted?: AvailableSlot) => void;
   compact?: boolean;
+  /** Offered when every slot on the chosen day is taken; resolves to a message to show. */
+  onJoinWaitlist?: () => Promise<string>;
 }
 
 export default function ScheduleStep({
@@ -32,7 +42,10 @@ export default function ScheduleStep({
   onDateChange,
   onSlotChange,
   compact = false,
+  onJoinWaitlist,
 }: ScheduleStepProps) {
+  const [waitlistNote, setWaitlistNote] = useState<string | null>(null);
+  const [joining, setJoining] = useState(false);
   const [weekStart, setWeekStart] = useState(() => startOfWeekMonday(new Date()));
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
@@ -49,6 +62,11 @@ export default function ScheduleStep({
   useEffect(() => {
     if (selectedDate) {
       autoPickedDate.current = true;
+      const selected = new Date(`${selectedDate}T12:00:00`);
+      if (!Number.isNaN(selected.getTime())) {
+        const monday = startOfWeekMonday(selected);
+        setWeekStart((prev) => (prev.getTime() === monday.getTime() ? prev : monday));
+      }
       return;
     }
     if (autoPickedDate.current || weekDays.length === 0) return;
@@ -107,6 +125,16 @@ export default function ScheduleStep({
       ? weekDays[0].dateObj.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
       : '';
 
+  const selectDate = (dateStr: string) => {
+    if (!dateStr || dateStr < todayStr) return;
+    const picked = new Date(`${dateStr}T12:00:00`);
+    if (!Number.isNaN(picked.getTime())) {
+      setWeekStart(startOfWeekMonday(picked));
+    }
+    onDateChange(dateStr);
+    onSlotChange('');
+  };
+
   const handlePrevWeek = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -138,7 +166,17 @@ export default function ScheduleStep({
       </div>
       <div className={styles.calendarCard}>
         <div className={styles.calHead}>
-          <h3>{monthLabel}</h3>
+          <div className={styles.calHeadLeft}>
+            <h3>{monthLabel}</h3>
+            <div className={styles.calPickerWrap}>
+              <CustomDatePicker
+                value={selectedDate}
+                min={todayStr}
+                placeholder="Pick a date"
+                onChange={selectDate}
+              />
+            </div>
+          </div>
           <div className={styles.calArrows}>
             <button type="button" onClick={handlePrevWeek} aria-label="Previous week">
               <i className="fa-solid fa-chevron-left" />
@@ -161,8 +199,7 @@ export default function ScheduleStep({
                 className={`${styles.dateCell} ${on ? styles.dateCellOn : ''} ${isPast ? styles.dateCellPast : ''}`}
                 onClick={() => {
                   if (isPast) return;
-                  onDateChange(d.dateStr);
-                  onSlotChange('');
+                  selectDate(d.dateStr);
                 }}
               >
                 <span>{d.label}</span>
@@ -191,6 +228,34 @@ export default function ScheduleStep({
           <p className={styles.noSlots} style={{ color: 'var(--accent-red)', marginBottom: 12 }}>
             {slotError}
           </p>
+        )}
+
+        {!slotsLoading && onJoinWaitlist && availableSlots.length > 0 &&
+          availableSlots.every((slot) => slot.available === false) && (
+          <div className={styles.noSlots} style={{ marginBottom: 12 }}>
+            <p style={{ margin: '0 0 8px' }}>This day is fully booked.</p>
+            {waitlistNote ? (
+              <p style={{ margin: 0 }}>{waitlistNote}</p>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                disabled={joining}
+                onClick={async () => {
+                  setJoining(true);
+                  try {
+                    setWaitlistNote(await onJoinWaitlist());
+                  } catch (e: unknown) {
+                    setWaitlistNote((e as { message?: string })?.message || 'Sign in to join the waitlist.');
+                  } finally {
+                    setJoining(false);
+                  }
+                }}
+              >
+                <i className="fa-solid fa-bell" /> Notify me if a slot opens
+              </button>
+            )}
+          </div>
         )}
 
         {slotsLoading ? (
